@@ -42,12 +42,15 @@ QNetworkReply *postJson(const QString &url, const QJsonObject &obj)
     return nam->post(request, QJsonDocument(obj).toJson(QJsonDocument::Compact));
 }
 
+const QByteArray Referer("https://www.bilibili.com");
+const QByteArray UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49");
+
 Request::Request(const QUrl &url)
     : QNetworkRequest(url)
 {
     setMaximumRedirectsAllowed(0);
-    setRawHeader("Referer", "https://www.bilibili.com");
-    setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49");
+    setRawHeader("Referer", Referer);
+    setRawHeader("User-Agent", UserAgent);
 }
 
 int statusCode(QNetworkReply *reply)

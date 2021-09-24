@@ -11,6 +11,7 @@ class AbstractVideoDownloadTask;
 class ContentTreeWidget;
 class ElidedTextLabel;
 
+class QBoxLayout;
 class QVBoxLayout;
 class QLabel;
 class QLineEdit;
@@ -45,6 +46,7 @@ private slots:
 
 private:
     void updateQnComboBox(QnList qnList);
+    void addPlayDirect(QBoxLayout *layout);
 
     QDialog *activityTipDialog;
     Extractor *extractor;

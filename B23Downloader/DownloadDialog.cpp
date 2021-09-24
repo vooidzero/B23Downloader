@@ -346,6 +346,107 @@ public:
 };
 
 
+
+#ifdef Q_OS_WIN
+static QString getPotPlayerPath()
+{
+    auto path = QSettings("DAUM", "PotPlayer64").value("ProgramPath").toString();
+    if (!path.isEmpty() && QFileInfo::exists(path)) {
+        return path;
+    }
+
+    path = QSettings("DAUM", "PotPlayer").value("ProgramPath").toString();
+    if (!path.isEmpty() && QFileInfo::exists(path)) {
+        return path;
+    }
+
+    return QString();
+}
+
+static void execPotPlayer(QString potPlayerPath, QString biliUrl)
+{
+    QStringList args {
+        biliUrl,
+        "/user_agent=" + Network::UserAgent,
+        "/referer=" + Network::Referer
+    };
+    QProcess::startDetached(potPlayerPath, args);
+}
+#endif
+
+/* 你妈的 VLC 报错:『您的输入无法被打开: VLC 无法打开 MRL「https://....」。详情请检查日志。』
+ * 为什么会这样啊 ! ! !
+static QString getVlcPath()
+{
+#ifdef Q_OS_WIN
+    auto path = QSettings("VideoLAN", "VLC").value(".").toString();
+    if (!path.isEmpty() && QFileInfo::exists(path)) {
+        return path;
+    }
+#endif
+    return QString();
+}
+
+static void execVlc(QString vlcPath, QString biliUrl)
+{
+    QStringList args {
+        biliUrl,
+        "--http-referrer=" + Network::Referer,
+        "--http-user-agent=" + Network::UserAgent
+    };
+    QProcess::startDetached(vlcPath, args);
+}
+*/
+
+static auto replyDeleter = [](QNetworkReply *reply) {
+    reply->deleteLater();
+};
+
+void DownloadDialog::addPlayDirect(QBoxLayout *layout)
+{
+    using std::move;
+#ifdef Q_OS_WIN
+    if (contentType != ContentType::Live) {
+        return;
+    }
+
+    std::function<void(QString)> handler;
+    QString playAppName;
+
+    QString path;
+    if (!(path = getPotPlayerPath()).isEmpty()) {
+        playAppName = "PotPlayer";
+        handler = [path=move(path)](QString url) { execPotPlayer(path, url); };
+    }
+    /* else if (!(path = getVlcPath()).isEmpty()) {
+        playAppName = "VLC";
+        handler = [path=move(path)](QString url) { execVlc(path, url); };
+    } */
+
+    if (!handler) {
+        return;
+    }
+
+    auto btn = new QPushButton(QString("直接用%1播放").arg(playAppName));
+    layout->insertWidget(0, btn);
+    connect(btn, &QPushButton::clicked, this, [this, handler=move(handler)]{
+        auto rawPtr = LiveDownloadTask::getPlayUrlInfo(contentId, qnComboBox->currentData().toInt());
+        std::unique_ptr<QNetworkReply, decltype(replyDeleter)> reply(rawPtr, replyDeleter);
+        connect(rawPtr, &QNetworkReply::finished, this, [this, reply=move(reply), handler=move(handler)] {
+            auto [json, errStr] = Network::parseReply(reply.get());
+            if (!errStr.isEmpty()) {
+                return;
+            }
+            auto key = LiveDownloadTask::playUrlInfoDataKey;
+            auto url = LiveDownloadTask::getPlayUrlFromPlayUrlInfo(json[key].toObject());
+            handler(url);
+            this->reject();
+        });
+    });
+    return;
+#endif
+}
+
 DownloadDialog::~DownloadDialog() = default;
 
 DownloadDialog::DownloadDialog(const QString &url, QWidget *parent)
@@ -492,6 +593,8 @@ void DownloadDialog::setupUi()
     bottomLayout->addWidget(okButton);
     bottomLayout->addWidget(cancelButton);
     mainLayout->addLayout(bottomLayout);
+
+    addPlayDirect(bottomLayout);
 
     connect(okButton, &QPushButton::clicked, this, &DownloadDialog::accept);
     connect(cancelButton, &QPushButton::clicked, this, &DownloadDialog::reject);

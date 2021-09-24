@@ -26,14 +26,18 @@ class AbstractDownloadTask: public QObject
 public:
     static constexpr qint64 Unknown = -1;
 
-    // return nullptr if invalid
+    /**
+     * @return a new AbstractDownloadTask object constructed from json. returns nullptr if invalid
+     */
     static AbstractDownloadTask *fromJsonObj(const QJsonObject &json);
     virtual QJsonObject toJsonObj() const = 0;
 
     virtual void startDownload() = 0;
     virtual void stopDownload() = 0;
 
-    // download task must be stopped
+    /**
+     * @brief download task should be stopped when this method is called.
+     */
     virtual void removeFile() = 0;
 
 signals:
@@ -47,6 +51,7 @@ protected:
     QJsonValue getReplyJson(const QString &dataKey = QString());
 
     // AbstractDownloadTask() = default;
+
     AbstractDownloadTask(const QString &path): path(path) {}
 
 public:
@@ -55,21 +60,27 @@ public:
     QString getPath() const { return path; }
     virtual QString getTitle() const;
 
-    // used to calculate download speed
+    /**
+     * @brief can be used to calculate download speed
+     */
     virtual qint64 getDownloadedBytesCnt() const = 0;
 
-    // estimate remaining time (in seconds) using download rate (`downBytesPerSec`)
-    // return -1 for INF or unknown
-    // LIVE: return running time (TODO: duration of downloaded)
+    /**
+     * @return estimate remaining time (in seconds) using downBytesPerSec.
+     * -1 for INF or unknown. LiveDownloadTask returns time since download started.
+     */
     virtual int estimateRemainingSeconds(qint64 downBytesPerSec) const = 0;
 
-    // return progress (0 ~ 1.0, including)
-    // if LIVE: return -1 (disabled)
+    /**
+     * @return progress (0.0 to 1.0) for non-live. LiveDownloadTask returns -1.
+     */
     virtual double getProgress() const = 0;
 
     virtual QString getProgressStr() const = 0;
 
-    // return quality description if exists, else null QString
+    /**
+     * @return quality description if exists, else null QString
+     */
     virtual QString getQnDescription() const = 0;
 };
 
@@ -100,6 +111,11 @@ public:
 
 protected:
     void startDownloadStream(const QUrl &url);
+
+    /**
+     * @brief parse json returned from getPlayUrlInfo request.
+     * start download if success, otherwise emit signal errorOccurred()
+     */
     virtual void parsePlayUrlInfo(const QJsonObject &data) = 0;
     virtual void onStreamReadyRead() = 0;
     virtual void onStreamFinished();
@@ -135,6 +151,7 @@ public:
     static QnList getAllPossibleQn();
     static QString getQnDescription(int qn);
     static QnInfo getQnInfoFromPlayUrlInfo(const QJsonObject &);
+    static QString getPlayUrlFromPlayUrlInfo(const QJsonObject &);
     static QNetworkReply *getPlayUrlInfo(qint64 roomId, int qn);
     QNetworkReply *getPlayUrlInfo() const override;
     static const QString playUrlInfoDataKey;

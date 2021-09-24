@@ -539,14 +539,8 @@ QnInfo LiveDownloadTask::getQnInfoFromPlayUrlInfo(const QJsonObject &data)
     return qnInfo;
 }
 
-void LiveDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
+QString LiveDownloadTask::getPlayUrlFromPlayUrlInfo(const QJsonObject &data)
 {
-    if (data["live_status"].toInt() != 1) {
-        emit errorOccurred("未开播或正在轮播");
-        return;
-    }
-    auto qnInfo = getQnInfoFromPlayUrlInfo(data);
-    qn = qnInfo.currentQn;
     auto urlObj = data["playurl_info"].toObject()
                 ["playurl"].toObject()
                 ["stream"].toArray().first()
@@ -556,12 +550,23 @@ void LiveDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
     auto obj = urlObj["url_info"].toArray().first();
     auto host = obj["host"].toString();
     auto extra = obj["extra"].toString();
+    return host + baseUrl + extra;
+}
+
+void LiveDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
+{
+    if (data["live_status"].toInt() != 1) {
+        emit errorOccurred("未开播或正在轮播");
+        return;
+    }
+    qn = getQnInfoFromPlayUrlInfo(data).currentQn;
+    auto url = getPlayUrlFromPlayUrlInfo(data);
 
     downloadedBytesCnt = 0;
     path = basePath + " " + QDateTime::currentDateTime().toString("[yyyy.MM.dd] hh.mm.ss");
     startTimestamp = QDateTime::currentSecsSinceEpoch();
 
-    startDownloadStream(host + baseUrl + extra);
+    startDownloadStream(url);
 }
 
 void LiveDownloadTask::onStreamReadyRead()

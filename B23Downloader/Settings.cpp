@@ -59,7 +59,7 @@ Q_GLOBAL_STATIC(Settings, settings)
 static constexpr auto KeyCookies = "cookies";
 
 Settings::Settings(QObject *parent)
-    :QSettings(QSettings::IniFormat, QSettings::UserScope, "github.vooidzero", "B23Downloader", parent)
+    :QSettings(QSettings::IniFormat, QSettings::UserScope, "VoidZero", "B23Downloader", parent)
 {
     setFallbacksEnabled(false);
     auto cookiesStr = value(KeyCookies).toString();

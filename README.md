@@ -1,4 +1,10 @@
-![icon-256](./README.assets/icon-96.png)
+<h1 align="center">
+  <br>
+  <img src="./README.assets/icon-96.png" alt="B23Downloader-icon" />
+  <br>
+  B23Downloader
+  <br>
+</h1>
 
 <center><h1>B23Downloader</h1></center>
 
@@ -8,7 +14,7 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 + [使用说明](#使用说明)
 
-+ [Build Issues](#Build Issues)
++ [Build-Issues](#Build-Issues)
 
 + [开发日志](#开发日志)
 
@@ -84,7 +90,7 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 
 
-# Build Issues
+# Build-Issues
 B23Downloader 使用 Qt 6 (C++ 17) 开发。
 
 由于所有请求链接均采用 HTTPS，所以依赖 OpenSSL库。虽然 Qt Installer 可以勾选  OpenSSL Toolkit，但 Qt Installer 并不会设置好相关环境，于是会出现找不到 SSL 库的错误（如 TLS initialization failed），解决方法参考 [TLS initialization failed on GET Request - Stack Overflow](https://stackoverflow.com/questions/53805704/tls-initialization-failed-on-get-request/59072649#59072649).

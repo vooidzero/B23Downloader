@@ -1,4 +1,4 @@
-![icon-256](E:\ProjectFile\Qt\B23Downloader\README.assets\icon-96.png)
+![icon-256](./README.assets/icon-96.png)
 
 <center><h1>B23Downloader</h1></center>
 
@@ -18,7 +18,7 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 ## Main Window
 
-<img src="E:\ProjectFile\Qt\B23Downloader\README.assets\mainwindow.png"  style="zoom:67%;" />
+<img src="./README.assets/mainwindow.png" alt="mainwindow" style="zoom:67%;" />
 
 简单，但也够用了。没有历史记录功能。（当然，对于正在下载的任务，关闭程序后再打开还是在的）
 
@@ -28,13 +28,13 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 ### 视频类
 
-<img src="E:\ProjectFile\Qt\B23Downloader\README.assets\download-example-bangumi.png"  style="zoom:67%;" />
+<img src="./README.assets/download-example-bangumi.png" alt="download-example-bangumi" style="zoom:67%;" />
 
 在上图中，选择的下载位置为 **E:/tmp**，那么选中的两个视频分别下载到 **E:/tmp/天气之子 原版.flv** 和 **E:/tmp/天气之子 预告花絮 MV1 爱能做到的还有什么.flv**
 
 ### 漫画
 
-<img src="E:\ProjectFile\Qt\B23Downloader\README.assets\download-example-manga.png" style="zoom:67%;" />
+<img src="./README.assets/download-example-manga.png" alt="download-example-manga" style="zoom:67%;" />
 
 如上图，下载位置还是 **E:/tmp**，选中的两项分别下载到文件夹 **E:/tmp/恋如雨止 81 第81话/** 和 **E:/tmp/恋如雨止 82 最终话/**.
 
@@ -44,7 +44,7 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 ### 直播
 
-<img src="E:\ProjectFile\Qt\B23Downloader\README.assets\download-example-live.png" style="zoom:67%;" />
+<img src="./README.assets/download-example-live.png" alt="download-example-live" style="zoom:67%;" />
 
 上图中，首先注意到，对话框中的标题为 【花少北丶】玩，其命名规则为【<用户名>】<房间标题>。
 

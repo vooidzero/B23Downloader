@@ -6,8 +6,6 @@
   <br>
 </h1>
 
-<center><h1>B23Downloader</h1></center>
-
 B23Downloader: 下载B站 视频/直播/漫画
 
 + 下载链接：[GitHub](https://github.com/vooidzero/B23Downloader/releases) ／ [南大Git](https://git.nju.edu.cn/zero/B23Downloader/-/releases)

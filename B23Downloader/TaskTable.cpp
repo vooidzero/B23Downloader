@@ -6,7 +6,7 @@
 #include <QtWidgets>
 
 static constexpr int MaxConcurrentTaskCount = 3;
-static constexpr int SaveTasksInterval = 6000; // ms
+static constexpr int SaveTasksInterval = 5000; // ms
 
 static constexpr int DownRateTimerInterval = 500; // ms
 static constexpr int DownRateWindowLength = 10;
@@ -64,6 +64,7 @@ int TaskTableWidget::rowOfCell(TaskCellWidget *cell) const
 
 void TaskTableWidget::setDirty()
 {
+    if (dirty) { return; }
     dirty = true;
     if (!saveTasksTimer->isActive()) {
         saveTasksTimer->start();
@@ -75,10 +76,16 @@ void TaskTableWidget::save()
     if (!dirty) {
         return;
     }
+
     // brute but works as the number of tasks is assumed to be small (at most a one or two thousand).
     QJsonArray array;
     for (int row = 0; row < rowCount(); row++) {
-        auto task = cellWidget(row)->getTask();
+        auto cell = cellWidget(row);
+        if (cell->getState() == TaskCellWidget::Finished) {
+            continue;
+        }
+
+        auto task = cell->getTask();
         if (qobject_cast<const LiveDownloadTask*>(task)) {
             // don't save live tasks
             continue;
@@ -208,6 +215,7 @@ void TaskTableWidget::onCellTaskFinished()
     });
     activeTaskCnt--;
     activateWaitingTasks();
+    setDirty();
 }
 
 void TaskTableWidget::onCellStartBtnClicked()
@@ -374,6 +382,7 @@ void TaskCellWidget::onErrorOccurred(const QString &errStr)
 
 void TaskCellWidget::onFinished()
 {
+    state = State::Finished;
     statusTextLabel->setText("已完成");
     startStopButton->setEnabled(false);
     removeButton->setEnabled(false);
@@ -481,6 +490,9 @@ void TaskCellWidget::startStopBtnClicked()
 
 void TaskCellWidget::stopDownload()
 {
+    if (state == State::Stopped || state == State::Finished) {
+        return;
+    }
     statusTextLabel->setText("暂停中");
     if (state == State::Downloading) {
         task->stopDownload();
@@ -498,6 +510,9 @@ void TaskCellWidget::remove()
 
 void TaskCellWidget::setWaitState()
 {
+    if (state != State::Stopped) {
+        return;
+    }
     statusTextLabel->setText("等待下载");
     state = State::Waiting;
     updateStartStopBtn();

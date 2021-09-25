@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     Network::accessManager()->setCookieJar(Settings::inst()->getCookieJar());
-
+    setWindowTitle("B23Downloader");
     setCentralWidget(new QWidget);
     auto mainLayout = new QVBoxLayout(centralWidget());
     auto topLayout = new QHBoxLayout;
@@ -149,7 +149,7 @@ void MainWindow::getUserInfoFinished()
         hasGotUInfo = true;
         auto data = json["data"];
         auto uname = data["uname"].toString();
-        ufaceUrl = data["face"].toString() + "@64w_64h.jpg";
+        ufaceUrl = data["face"].toString() + "@64w_64h.png";
         if (data["vipStatus"].toInt()) {
             unameLabel->setText(uname, B23Style::Pink);
         } else {

@@ -33,6 +33,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *event) override;
     QSize minimumSizeHint() const override;
+    QSize sizeHint() const override;
     bool event(QEvent *e) override;
 };
 

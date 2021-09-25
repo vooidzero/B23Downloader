@@ -40,6 +40,15 @@ QSize ElidedTextLabel::minimumSizeHint() const
     }
 }
 
+QSize ElidedTextLabel::sizeHint() const
+{
+    if (hintWidth == 0) {
+        return QLabel::minimumSizeHint();
+    } else {
+        return QSize(hintWidth, QLabel::minimumSizeHint().height());
+    }
+}
+
 ElidedTextLabel::ElidedTextLabel(QWidget *parent)
     : QLabel(parent) {}
 

@@ -571,7 +571,13 @@ void DownloadDialog::setupUi()
     auto pathLayout = new QHBoxLayout(pathLayoutFrame);
     pathLayout->addWidget(new QLabel("下载到: "));
     pathLayout->setContentsMargins(2, 0, 1, 0);
-    pathLabel = new ElidedTextLabel("E:/tmp");
+    pathLabel = new ElidedTextLabel;
+    auto lastDir = Settings::inst()->value("lastDir").toString();
+    if (lastDir.isEmpty() || !QDir(lastDir).exists()) {
+        pathLabel->setText(QDir::currentPath());
+    } else {
+        pathLabel->setText(lastDir);
+    }
     pathLabel->setElideMode(Qt::ElideMiddle);
     pathLabel->setHintWidthToString("/someDir/anime/百变小樱 第01话 不可思议的魔法书");
     selPathButton = new QPushButton;
@@ -809,6 +815,8 @@ void DownloadDialog::selectPath()
 
 QList<AbstractDownloadTask*> DownloadDialog::getDownloadTasks()
 {
+    Settings::inst()->setValue("lastDir", pathLabel->text());
+
     QList<AbstractDownloadTask*> tasks;
     auto dir = QDir(pathLabel->text());
     int qn = (qnComboBox == nullptr ? 0 : qnComboBox->currentData().toInt());

@@ -33,40 +33,37 @@ void Extractor::urlNotSupported()
     emit errorOccurred(supportedUrlTip);
 }
 
-void Extractor::start(const QString &url)
+void Extractor::start(QString url)
 {
-    QString trimmed = url.trimmed();
+    url = url.trimmed();
     QRegularExpressionMatch m;
 
     // bad coding style?!
 
     // try to match short forms
-    if ((m = QRegExp("^(?:BV|bv)([a-zA-Z0-9]+)$").match(trimmed)).hasMatch()) {
+    if ((m = QRegExp("^(?:BV|bv)([a-zA-Z0-9]+)$").match(url)).hasMatch()) {
         return startUgcByBvId("BV" + m.captured(1));
     }
-    if ((m = QRegExp(R"(^av(\d+)$)").match(trimmed)).hasMatch()) {
+    if ((m = QRegExp(R"(^av(\d+)$)").match(url)).hasMatch()) {
         return startUgcByAvId(m.captured(1).toLongLong());
     }
-    if ((m = QRegExp(R"(^(ss|ep)(\d+)$)").match(trimmed)).hasMatch()) {
+    if ((m = QRegExp(R"(^(ss|ep)(\d+)$)").match(url)).hasMatch()) {
         auto idType = (m.captured(1) == "ss" ? PgcIdType::SeasonId : PgcIdType::EpisodeId);
         return startPgc(idType, m.captured(2).toLongLong());
     }
-    if ((m = QRegExp(R"(^live(\d+)$)").match(trimmed)).hasMatch()) {
+    if ((m = QRegExp(R"(^live(\d+)$)").match(url)).hasMatch()) {
         return startLive(m.captured(1).toLongLong());
     }
 
-    parseUrl(trimmed);
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        parseUrl("https://" + url);
+    } else {
+        parseUrl(url);
+    }
 }
 
 void Extractor::parseUrl(QUrl url)
 {
-    if (!url.scheme().isEmpty() && url.scheme() != "http" && url.scheme() != "https") {
-        return urlNotSupported();
-    }
-    url.setScheme("https");
-
-    // bad coding style?!
-
     auto host = url.authority().toLower();
     auto path = url.path();
     auto query = QUrlQuery(url);

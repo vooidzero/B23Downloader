@@ -81,7 +81,7 @@ public:
 
     Extractor();
     ~Extractor();
-    void start(const QString &url);
+    void start(QString url);
     void abort();
     std::unique_ptr<Result> getResult();
 

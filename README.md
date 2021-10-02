@@ -12,7 +12,7 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 + [使用说明](#使用说明)
 
-+ [Build-Issues](#Build-Issues)
++ [Build-Issues](#build-issues)
 
 + [开发日志](#开发日志)
 
@@ -102,6 +102,21 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发。
 <br>
 
 # 开发日志
+
++ 2021/10/02
+  
+  <details><summary>在 Windows 上保证只运行一个实例</summary>
+  <p>位置：main.cpp</p>
+  <p>需求：在打开时，如果应用已在运行，则弹出已在运行的应用窗口，新运行的应用退出。</p>
+  <br>
+  <p>通过搜索引擎可以找到 <a href="https://github.com/qtproject/qt-solutions/tree/master/qtsingleapplication">QtSingleApplication</a>, <a href="https://github.com/itay-grudev/SingleApplication">SingleApplication</a>, 以及一些轻量些的解决方法。其中，因为一些资源在 Unix 平台上由 qt 而不是 os 拥有，其在程序崩溃后不会被回收，所以在 Unix 平台时要多一些操作。<b>简单起见，我就不管 Windows 之外的平台了</b>。</p>
+  <p>要判断应用是否已在运行，可以在执行时尝试创建某种命名的资源，如果返回错误“已被创建”，则说明应用已在运行。可选的有: QSharedMemory, QLockFile, <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexa">CreateMutexA</a> (WinApi) 等</p>
+  <p>弹出已在运行的应用，网上找到的都是用 <code>QLocalServer</code> 和 <code>QLocalSocket</code> 实现的，<b>本质就是进程间通信</b>。在 Windows 上，<a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow#remarks">设置窗口到最前方 (foreground) 是有限制的</a>，即应用不能自己把自己弹到最前面（防止流氓程序）。foreground 程序将另一个程序设置为 foreground 是允许的，这里新运行的那个程序就是 foreground。让新进程获取原进程的 hWnd (handle to a window)，如果已最小化就调用 <a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow">ShowWindow(hWnd, SW_RESTORE)</a>，否则调用 <a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow">SetForegroundWindow(hWnd)</a>。</p>
+  <br>
+  <p>最后选择用 QSharedMemory 来实现 HWND 的共享，QSharedMemory::create() 用来判断应用是否已运行。</p>
+  </details>
+
+<br>
 
 ### 为什么想做这个东西？
 

@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
         return hWnd;
     };
 
-    bool isAppAlreadyExist = sharedMem.create(sizeof(HWND));
-    if (isAppAlreadyExist) {
+    bool isNoAppAlreadyExist = sharedMem.create(sizeof(HWND));
+    if (isNoAppAlreadyExist) {
         MainWindow w;
         setHwnd((HWND)w.winId());
         w.show();

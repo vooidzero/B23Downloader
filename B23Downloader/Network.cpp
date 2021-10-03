@@ -11,51 +11,54 @@ QNetworkAccessManager *accessManager()
     return nam();
 }
 
-QNetworkReply *get(const QUrl &url)
+int statusCode(QNetworkReply *reply)
 {
-    return nam->get(Request(url));
+    return reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 }
 
-QNetworkReply *get(const QString &url)
+
+
+const QByteArray Bili::Referer("https://www.bilibili.com");
+const QByteArray Bili::UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49");
+
+Bili::Request::Request(const QUrl &url)
+    : QNetworkRequest(url)
 {
-    return nam->get(Request(url));
+    setMaximumRedirectsAllowed(0);
+    setRawHeader("Referer", Bili::Referer);
+    setRawHeader("User-Agent", Bili::UserAgent);
 }
 
-QNetworkReply *postUrlEncoded(const QString &url, const QByteArray &data)
+
+QNetworkReply *Bili::get(const QUrl &url)
 {
-    auto request = Request(url);
+    return nam->get(Bili::Request(url));
+}
+
+QNetworkReply *Bili::get(const QString &url)
+{
+    return nam->get(Bili::Request(url));
+}
+
+QNetworkReply *Bili::postUrlEncoded(const QString &url, const QByteArray &data)
+{
+    auto request = Bili::Request(url);
     request.setRawHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
     return nam->post(request, data);
 }
 
-QNetworkReply *postJson(const QString &url, const QByteArray &data)
+QNetworkReply *Bili::postJson(const QString &url, const QByteArray &data)
 {
-    auto request = Request(url);
+    auto request = Bili::Request(url);
     request.setRawHeader("content-type", "application/json;charset=UTF-8");
     return nam->post(request, data);
 }
 
-QNetworkReply *postJson(const QString &url, const QJsonObject &obj)
+QNetworkReply *Bili::postJson(const QString &url, const QJsonObject &obj)
 {
-    auto request = Request(url);
+    auto request = Bili::Request(url);
     request.setRawHeader("content-type", "application/json;charset=UTF-8");
     return nam->post(request, QJsonDocument(obj).toJson(QJsonDocument::Compact));
-}
-
-const QByteArray Referer("https://www.bilibili.com");
-const QByteArray UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49");
-
-Request::Request(const QUrl &url)
-    : QNetworkRequest(url)
-{
-    setMaximumRedirectsAllowed(0);
-    setRawHeader("Referer", Referer);
-    setRawHeader("User-Agent", UserAgent);
-}
-
-int statusCode(QNetworkReply *reply)
-{
-    return reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 }
 
 static bool isJsonValueInvalid(const QJsonValue &val)
@@ -63,7 +66,7 @@ static bool isJsonValueInvalid(const QJsonValue &val)
     return val.isNull() || val.isUndefined();
 }
 
-std::pair<QJsonObject, QString> parseReply(QNetworkReply *reply, const QString& requiredKey)
+std::pair<QJsonObject, QString> Bili::parseReply(QNetworkReply *reply, const QString& requiredKey)
 {
     if (reply->error() != QNetworkReply::NoError) {
         qDebug() << "network error:" << reply->errorString() << ", url=" << reply->url().toString();

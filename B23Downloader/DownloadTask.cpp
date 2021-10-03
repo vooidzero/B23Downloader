@@ -65,7 +65,7 @@ QJsonValue AbstractDownloadTask::getReplyJson(const QString &dataKey)
         return QJsonValue();
     }
 
-    const auto [json, errorString] = Network::parseReply(reply, dataKey);
+    const auto [json, errorString] = Network::Bili::parseReply(reply, dataKey);
 
     if (!errorString.isNull()) {
         emit errorOccurred(errorString);
@@ -149,7 +149,7 @@ void AbstractVideoDownloadTask::startDownloadStream(const QUrl &url)
         return;
     }
 
-    auto request = Network::Request(url);
+    auto request = Network::Bili::Request(url);
     if (downloadedBytesCnt != 0) {
         request.setRawHeader("Range", "bytes=" + QByteArray::number(downloadedBytesCnt) + "-");
     }
@@ -353,7 +353,7 @@ QNetworkReply *PgcDownloadTask::getPlayUrlInfo(qint64 epId, int qn)
 {
     auto api = "https://api.bilibili.com/pgc/player/web/playurl";
     auto query = QString("?ep_id=%1&qn=%2").arg(epId).arg(qn);
-    return Network::get(api + query);
+    return Network::Bili::get(api + query);
 }
 
 QNetworkReply *PgcDownloadTask::getPlayUrlInfo() const
@@ -390,7 +390,7 @@ QNetworkReply *PugvDownloadTask::getPlayUrlInfo(qint64 epId, int qn)
 {
     auto api = "https://api.bilibili.com/pugv/player/web/playurl";
     auto query = QString("?ep_id=%1&qn=%2").arg(epId).arg(qn);
-    return Network::get(api + query);
+    return Network::Bili::get(api + query);
 }
 
 QNetworkReply *PugvDownloadTask::getPlayUrlInfo() const
@@ -427,7 +427,7 @@ QNetworkReply *UgcDownloadTask::getPlayUrlInfo(qint64 aid, qint64 cid, int qn)
 {
     auto api = "https://api.bilibili.com/x/player/playurl";
     auto query = QString("?avid=%1&cid=%2&qn=%3").arg(aid).arg(cid).arg(qn);
-    return Network::get(api + query);
+    return Network::Bili::get(api + query);
 }
 
 QNetworkReply *UgcDownloadTask::getPlayUrlInfo() const
@@ -448,7 +448,7 @@ QNetworkReply *LiveDownloadTask::getPlayUrlInfo(qint64 roomId, int qn)
 {
     auto api = "https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo";
     auto query = QString("?protocol=0,1&format=0,1,2&codec=0,1&room_id=%1&qn=%2").arg(roomId).arg(qn);
-    return Network::get(api + query);
+    return Network::Bili::get(api + query);
 }
 
 QNetworkReply *LiveDownloadTask::getPlayUrlInfo() const
@@ -609,7 +609,7 @@ void ComicDownloadTask::startDownload()
     auto getImgPathsUrl = "https://manga.bilibili.com/twirp/comic.v1.Comic/GetImageIndex?device=pc&platform=web";
 //    auto postData = "{\"ep_id\":" + QByteArray::number(epid) + "}";
 //    httpReply = Network::postJson(getImgPathsUrl, postData);
-    httpReply = Network::postJson(getImgPathsUrl, {{"ep_id", epId}});
+    httpReply = Network::Bili::postJson(getImgPathsUrl, {{"ep_id", epId}});
     connect(httpReply, &QNetworkReply::finished, this, &ComicDownloadTask::getImgInfoFinished);
 }
 
@@ -654,7 +654,7 @@ void ComicDownloadTask::downloadNextImg()
     }
     auto getTokenUrl = "https://manga.bilibili.com/twirp/comic.v1.Comic/ImageToken?device=pc&platform=web";
     auto postData = R"({"urls":"[\")" + imgRqstPaths[finishedImgCnt].toUtf8() + R"(\"]"})";
-    httpReply = Network::postJson(getTokenUrl, postData);
+    httpReply = Network::Bili::postJson(getTokenUrl, postData);
 
     connect(httpReply, &QNetworkReply::finished, this, &ComicDownloadTask::getImgTokenFinished);
 }
@@ -674,7 +674,7 @@ void ComicDownloadTask::getImgTokenFinished()
     if (!file) {
         return;
     }
-    httpReply = Network::get(url + "?token=" + token);
+    httpReply = Network::Bili::get(url + "?token=" + token);
     connect(httpReply, &QNetworkReply::readyRead, this, &ComicDownloadTask::onImgReadyRead);
     connect(httpReply, &QNetworkReply::finished, this, &ComicDownloadTask::downloadImgFinished);
 }

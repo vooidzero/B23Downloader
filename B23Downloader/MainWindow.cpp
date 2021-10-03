@@ -10,7 +10,6 @@
 #include <QtWidgets>
 #include <QtNetwork>
 
-
 static constexpr int GetUserInfoRetryInterval = 10000; // ms
 static constexpr int GetUserInfoTimeout = 10000; // ms
 
@@ -117,7 +116,7 @@ void MainWindow::startGetUserInfo()
         return;
     }
     unameLabel->setText("登录中...", Qt::gray);
-    auto rqst = Network::Request(QUrl("https://api.bilibili.com/nav"));
+    auto rqst = Network::Bili::Request(QUrl("https://api.bilibili.com/nav"));
     rqst.setTransferTimeout(GetUserInfoTimeout);
     uinfoReply = Network::accessManager()->get(rqst);;
     connect(uinfoReply, &QNetworkReply::finished, this, &MainWindow::getUserInfoFinished);
@@ -135,7 +134,7 @@ void MainWindow::getUserInfoFinished()
         return;
     }
 
-    const auto [json, errorString] = Network::parseReply(reply, "data");
+    const auto [json, errorString] = Network::Bili::parseReply(reply, "data");
 
     if (!json.empty() && !errorString.isNull()) {
         // cookies is wrong, or expired?
@@ -184,7 +183,7 @@ void MainWindow::logoutActionTriggered()
 
     auto settings = Settings::inst();
     auto exitPostData = "biliCSRF=" + settings->getCookieJar()->getCookie("bili_jct");
-    auto exitReply = Network::postUrlEncoded("https://passport.bilibili.com/login/exit/v2", exitPostData);
+    auto exitReply = Network::Bili::postUrlEncoded("https://passport.bilibili.com/login/exit/v2", exitPostData);
     connect(exitReply, &QNetworkReply::finished, this, [=]{ exitReply->deleteLater(); });
     settings->removeCookies();
 }
@@ -198,7 +197,7 @@ void MainWindow::startGetUFace()
         return;
     }
 
-    auto rqst = Network::Request(ufaceUrl);
+    auto rqst = Network::Bili::Request(ufaceUrl);
     rqst.setTransferTimeout(GetUserInfoTimeout);
     uinfoReply = Network::accessManager()->get(rqst);
     connect(uinfoReply, &QNetworkReply::finished, this, &MainWindow::getUFaceFinished);

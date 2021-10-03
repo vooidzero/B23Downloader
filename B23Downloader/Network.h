@@ -12,6 +12,24 @@ namespace Network
 
 QNetworkAccessManager *accessManager();
 
+int statusCode(QNetworkReply *reply);
+
+
+namespace Bili {
+
+extern const QByteArray Referer;
+extern const QByteArray UserAgent;
+
+
+/**
+ * @brief simple subclass of QNetworkRequest that sets referer (to bilibili.com) and user-agent header in ctor
+ */
+class Request : public QNetworkRequest {
+public:
+    Request(const QUrl &url);
+};
+
+
 QNetworkReply *get(const QString &url);
 QNetworkReply *get(const QUrl &url);
 
@@ -30,29 +48,15 @@ QNetworkReply *postJson(const QString &url, const QByteArray &data);
  */
 QNetworkReply *postJson(const QString &url, const QJsonObject &obj);
 
-
-extern const QByteArray UserAgent;
-extern const QByteArray Referer;
-
-/**
- * @brief simple subclass of QNetworkRequest that sets referer and user-agent header in ctor
- */
-class Request : public QNetworkRequest {
-public:
-    Request(const QUrl &url);
-};
-
-
-int statusCode(QNetworkReply *reply);
-
-
 /*!
  * @return pair (json object, error string) (error string isNull if no error).
  * @param requiredKey is only used to help checking whether request is succeed.
  */
 std::pair<QJsonObject, QString> parseReply(QNetworkReply *reply, const QString& requiredKey = QString());
+} // end namespace Bili
 
-} // namespace Network
+
+} // end namespace Network
 
 
 #endif // NETWORK_H

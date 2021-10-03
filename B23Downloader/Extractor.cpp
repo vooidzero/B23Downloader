@@ -166,7 +166,7 @@ QJsonObject Extractor::getReplyJsonObj(const QString &requiredKey)
         return QJsonObject();
     }
 
-    const auto [json, errorString] = Network::parseReply(reply, requiredKey);
+    const auto [json, errorString] = Network::Bili::parseReply(reply, requiredKey);
 
     if (!errorString.isNull()) {
         emit errorOccurred(errorString);
@@ -228,7 +228,7 @@ void Extractor::tryRedirect(const QUrl &url)
 void Extractor::startPgcByMdId(qint64 mdId)
 {
     auto query = "https://api.bilibili.com/pgc/review/user?media_id=" + QString::number(mdId);
-    httpReply = Network::get(query);
+    httpReply = Network::Bili::get(query);
     connect(httpReply, &QNetworkReply::finished, this, [this] {
         auto result = getReplyJsonObj("result");
         if (result.isEmpty()) {
@@ -246,7 +246,7 @@ void Extractor::startPgc(PgcIdType idType, qint64 id)
     }
     auto api = "https://api.bilibili.com/pgc/view/web/season";
     auto query = QString("?%1=%2").arg(idType == PgcIdType::SeasonId ? "season_id" : "ep_id").arg(id);
-    httpReply = Network::get(api + query);
+    httpReply = Network::Bili::get(api + query);
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::pgcFinished);
 }
 
@@ -355,7 +355,7 @@ void Extractor::pgcFinished()
     // season is not free. add user payment info
     auto userStatApi = "https://api.bilibili.com/pgc/view/web/season/user/status";
     auto query = "?season_id=" + QString::number(ssid);
-    httpReply = Network::get(userStatApi + query);
+    httpReply = Network::Bili::get(userStatApi + query);
     connect(httpReply, &QNetworkReply::finished, this, [this, pgcRes = move(pgcRes)]() mutable {
         auto result = getReplyJsonObj("result");
         if (result.isEmpty()) {
@@ -385,7 +385,7 @@ void Extractor::startLive(qint64 roomId)
 {
     auto api = "https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom";
     auto query = "?room_id=" + QString::number(roomId);
-    httpReply = Network::get(api + query);
+    httpReply = Network::Bili::get(api + query);
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::liveFinished);
 }
 
@@ -431,7 +431,7 @@ void Extractor::liveFinished()
 
     auto validateApi = "https://api.live.bilibili.com/av/v1/PayLive/liveValidate";
     auto query = "?room_id=" + QString::number(roomId);
-    httpReply = Network::get(validateApi + query);
+    httpReply = Network::Bili::get(validateApi + query);
     connect(httpReply, &QNetworkReply::finished, this, [this, liveRes = move(liveRes)]() mutable {
         auto data = getReplyJsonObj("data");
         if (data.isEmpty()) {
@@ -449,7 +449,7 @@ void Extractor::liveFinished()
 
 void Extractor::startLiveActivity(const QUrl &url)
 {
-    httpReply = Network::get(url);
+    httpReply = Network::Bili::get(url);
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::liveActivityFinished);
 }
 
@@ -493,7 +493,7 @@ void Extractor::startPugv(PugvIdType idType, qint64 id)
     }
     auto api = "https://api.bilibili.com/pugv/view/web/season";
     auto query = QString("?%1=%2").arg(idType == PugvIdType::SeasonId ? "season_id" : "ep_id").arg(id);
-    httpReply = Network::get(api + query);
+    httpReply = Network::Bili::get(api + query);
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::pugvFinished);
 }
 
@@ -539,7 +539,7 @@ void Extractor::startUgcByAvId(qint64 avid)
 
 void Extractor::startUgc(const QString &query)
 {
-    httpReply = Network::get("https://api.bilibili.com/x/web-interface/view?" + query);
+    httpReply = Network::Bili::get("https://api.bilibili.com/x/web-interface/view?" + query);
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::ugcFinished);
 }
 
@@ -597,7 +597,7 @@ void Extractor::ugcFinished()
 void Extractor::startComic(int comicId)
 {
     auto url = "https://manga.bilibili.com/twirp/comic.v1.Comic/ComicDetail?device=pc&platform=web";
-    httpReply = Network::postJson(QString(url), QJsonObject{{"comic_id", comicId}});
+    httpReply = Network::Bili::postJson(QString(url), QJsonObject{{"comic_id", comicId}});
     connect(httpReply, &QNetworkReply::finished, this, &Extractor::comicFinished);
 }
 

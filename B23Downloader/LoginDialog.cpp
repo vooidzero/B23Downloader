@@ -99,7 +99,7 @@ QJsonValue LoginDialog::getReplyData()
         return QJsonValue();
     }
 
-    const auto [json, errorString] = Network::parseReply(reply, "data");
+    const auto [json, errorString] = Network::Bili::parseReply(reply, "data");
     if (!errorString.isNull()) {
         tipLabel->setText(errorString);
         showRefreshButton();
@@ -111,7 +111,7 @@ QJsonValue LoginDialog::getReplyData()
 
 void LoginDialog::startGetLoginUrl()
 {
-    httpReply = Network::get("https://passport.bilibili.com/qrcode/getLoginUrl");
+    httpReply = Network::Bili::get("https://passport.bilibili.com/qrcode/getLoginUrl");
     connect(httpReply, &QNetworkReply::finished, this, &LoginDialog::getLoginUrlFinished);
 }
 
@@ -134,7 +134,7 @@ void LoginDialog::getLoginUrlFinished()
 void LoginDialog::pollLoginInfo()
 {
     auto postData = QString("oauthKey=%1").arg(oauthKey).toUtf8();
-    httpReply = Network::postUrlEncoded("https://passport.bilibili.com/qrcode/getLoginInfo", postData);
+    httpReply = Network::Bili::postUrlEncoded("https://passport.bilibili.com/qrcode/getLoginInfo", postData);
     connect(httpReply, &QNetworkReply::finished, this, &LoginDialog::getLoginInfoFinished);
 }
 

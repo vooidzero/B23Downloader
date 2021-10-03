@@ -367,8 +367,8 @@ static void execPotPlayer(QString potPlayerPath, QString biliUrl)
 {
     QStringList args {
         biliUrl,
-        "/user_agent=" + Network::UserAgent,
-        "/referer=" + Network::Referer
+        "/user_agent=" + Network::Bili::UserAgent,
+        "/referer=" + Network::Bili::Referer
     };
     QProcess::startDetached(potPlayerPath, args);
 }
@@ -433,7 +433,7 @@ void DownloadDialog::addPlayDirect(QBoxLayout *layout)
         auto rawPtr = LiveDownloadTask::getPlayUrlInfo(contentId, qnComboBox->currentData().toInt());
         std::unique_ptr<QNetworkReply, decltype(replyDeleter)> reply(rawPtr, replyDeleter);
         connect(rawPtr, &QNetworkReply::finished, this, [this, reply=move(reply), handler=move(handler)] {
-            auto [json, errStr] = Network::parseReply(reply.get());
+            auto [json, errStr] = Network::Bili::parseReply(reply.get());
             if (!errStr.isEmpty()) {
                 return;
             }
@@ -737,7 +737,7 @@ void DownloadDialog::getCurrentItemQnListFinished()
     if (reply->error() == QNetworkReply::OperationCanceledError) {
         return;
     }
-    auto [json, errStr] = Network::parseReply(reply);
+    auto [json, errStr] = Network::Bili::parseReply(reply);
     if (!errStr.isNull()) {
         QMessageBox::critical(this, "获取画质列表", "获取画质列表失败: " + errStr);
         return;

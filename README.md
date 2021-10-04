@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="./README.assets/icon-96.png" alt="B23Downloader-icon" />
+  <img src="./B23Downloader/icons/icon-96x96.png" alt="B23Downloader-icon" />
   <br>
   B23Downloader
   <br>

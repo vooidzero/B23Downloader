@@ -18,7 +18,6 @@ TaskTableWidget::TaskTableWidget(QWidget *parent)
     verticalHeader()->hide();
     setColumnCount(1);
     horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    setMinimumSize(560, 250);
     setFocusPolicy(Qt::NoFocus);
     setStyleSheet( "QTableWidget {"
         "selection-background-color: rgb(227, 227, 229);"

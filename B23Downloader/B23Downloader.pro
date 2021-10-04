@@ -1,3 +1,4 @@
+VERSION = 0.9.3
 QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -8,14 +9,16 @@ RC_ICONS = B23Downloader.ico
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    AboutWidget.cpp \
     DownloadDialog.cpp \
     DownloadTask.cpp \
     Extractor.cpp \
     LoginDialog.cpp \
     MainWindow.cpp \
+    MyTabWidget.cpp \
     Network.cpp \
     QrCode.cpp \
     Settings.cpp \
@@ -24,11 +27,13 @@ SOURCES += \
     utils.cpp
 
 HEADERS += \
+    AboutWidget.h \
     DownloadDialog.h \
     DownloadTask.h \
     Extractor.h \
     LoginDialog.h \
     MainWindow.h \
+    MyTabWidget.h \
     Network.h \
     QrCode.h \
     Settings.h \

@@ -2,10 +2,13 @@
 #include "Settings.h"
 #include "Network.h"
 #include "utils.h"
+
+#include "Extractor.h"
 #include "LoginDialog.h"
 #include "DownloadDialog.h"
 #include "TaskTable.h"
-#include "Extractor.h"
+#include "AboutWidget.h"
+#include "MyTabWidget.h"
 
 #include <QtWidgets>
 #include <QtNetwork>
@@ -62,31 +65,33 @@ MainWindow::MainWindow(QWidget *parent)
     auto downloadButton = new QPushButton;
     downloadButton->setToolTip("下载");
     downloadButton->setFixedSize(QSize(32, 32));
-    downloadButton->setIconSize(QSize(32, 32));
-    downloadButton->setIcon(QIcon(":/icons/download.png"));
+    downloadButton->setIconSize(QSize(28, 28));
+    downloadButton->setIcon(QIcon(":/icons/download.svg"));
     downloadButton->setCursor(Qt::PointingHandCursor);
-    downloadButton->setStyleSheet(R"(
-        QPushButton {
-            border: 1px solid gray;
-            border-left: 0px;
-            background-color: white;
-        }
-        QPushButton:hover   { background-color: rgb(229, 229, 229); }
-        QPushButton:pressed { background-color: rgb(204, 204, 204); }
-    )");
+    downloadButton->setStyleSheet(
+        "QPushButton{border:1px solid gray; border-left:0px; background-color:white;}"
+        "QPushButton:hover{background-color:rgb(229,229,229);}"
+        "QPushButton:pressed{background-color:rgb(204,204,204);}"
+    );
     connect(urlLineEdit, &QLineEdit::returnPressed, this, &MainWindow::downloadButtonClicked);
     connect(downloadButton, &QPushButton::clicked, this, &MainWindow::downloadButtonClicked);
 
     downloadUrlLayout->addWidget(urlLineEdit, 1);
     downloadUrlLayout->addWidget(downloadButton);
     topLayout->addLayout(downloadUrlLayout, 2);
+    mainLayout->addLayout(topLayout);
 
     taskTable = new TaskTableWidget;
     QTimer::singleShot(0, this, [this]{ taskTable->load(); });
-    mainLayout->addLayout(topLayout);
-    mainLayout->addWidget(taskTable);
+    auto tabs = new MyTabWidget;
+    tabs->addTab(taskTable, QIcon(":/icons/download.svg"), "正在下载");
+    tabs->addTab(new AboutWidget, QIcon(":/icons/about.svg"), "关于");
+    mainLayout->addWidget(tabs);
 
-    // -------- LAST -------------------------------------------------------------------
+    setStyleSheet("QMainWindow{background-color:white;}QTableWidget{border:none;}");
+    setMinimumSize(640, 360);
+    QTimer::singleShot(0, this, [this]{ resize(minimumSize()); });
+
     urlLineEdit->setFocus();
     startGetUserInfo();
     //    auto reply = B23Api::get("https://www.bilibili.com/blackboard/topic/activity-4AL5_Jqb3.html");

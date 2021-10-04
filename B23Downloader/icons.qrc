@@ -1,12 +1,14 @@
 <RCC>
     <qresource prefix="/">
         <file>icons/refresh.png</file>
-        <file>icons/download.png</file>
         <file>icons/folder.svg</file>
         <file>icons/logout.svg</file>
         <file>icons/akkarin.png</file>
         <file>icons/remove.svg</file>
         <file>icons/manga.svg</file>
         <file>icons/video.svg</file>
+        <file>icons/about.svg</file>
+        <file>icons/download.svg</file>
+        <file>icons/icon-96x96.png</file>
     </qresource>
 </RCC>

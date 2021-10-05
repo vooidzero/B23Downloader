@@ -56,13 +56,13 @@ B23Downloader: 下载B站 视频/直播/漫画
 
 <img src="./README.assets/download-example-live.png" alt="download-example-live" width="400" />
 
-上图中，首先注意到，对话框中的标题为 【花少北丶】玩，其命名规则为【<用户名>】<房间标题>。
+上图中，对话框的标题为 *【哔哩哔哩英雄联盟赛事】【直播】HLE vs LNG*，其命名规则为【<用户名>】<房间标题>，示例中用户名为 *哔哩哔哩英雄联盟赛事*，房间标题为 *【直播】HLE vs LNG*。
 
-下载文件的命名为 <标题> <下载开始时间>.flv，比如**【花少北丶】玩 [2021.09.24] 22.21.45.flv**，其所在文件为上图中所选的 **E:/tmp/**
+下载文件的命名为 <标题> <下载开始时间>.flv，比如**【哔哩哔哩英雄联盟赛事】【直播】HLE vs LNG [2021.10.05] 18.59.22.flv**，其所在文件夹为上图中所选的 **E:/tmp/**
 
 目前的直播下载任务策略为：
 
-- 暂停直播下载任务后重新开始，会写入另一个文件，比如 【花少北丶】玩 [2021.09.24] **22.32.11**.flv
+- 暂停直播下载任务后重新开始，会写入另一个文件，比如 【哔哩哔哩英雄联盟赛事】【直播】HLE vs LNG [2021.10.05] **19.32.11**.flv
 - 删除任务不会删除任何相关文件
 - 任务不会被保存，即退出程序后再启动，之前的直播下载任务不被保留
 
@@ -95,9 +95,9 @@ B23Downloader: 下载B站 视频/直播/漫画
 <br>
 
 # Build-Issues
-B23Downloader 使用 Qt 6 (C++ 17) 开发。
+B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit 的，但你可以在其他桌面平台编译使用。
 
-由于所有请求链接均采用 HTTPS，所以依赖 OpenSSL库。虽然 Qt Installer 可以勾选  OpenSSL Toolkit，但 Qt Installer 并不会设置好相关环境，于是会出现找不到 SSL 库的错误（如 TLS initialization failed），解决方法参考 [TLS initialization failed on GET Request - Stack Overflow](https://stackoverflow.com/questions/53805704/tls-initialization-failed-on-get-request/59072649#59072649).
+由于所有请求链接均采用 HTTPS，所以依赖 OpenSSL库。在 **Windows** 上，虽然 Qt Installer 可以勾选  OpenSSL Toolkit，但 Qt Installer 并不会设置好相关环境，于是会出现找不到 SSL 库的错误（如 **TLS initialization failed**），解决方法参考 [TLS initialization failed on GET Request - Stack Overflow](https://stackoverflow.com/questions/53805704/tls-initialization-failed-on-get-request/59072649#59072649).
 
 <br>
 

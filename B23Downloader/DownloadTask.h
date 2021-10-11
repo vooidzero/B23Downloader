@@ -17,8 +17,6 @@ struct QnInfo {
     int currentQn;
 };
 
-
-
 class AbstractDownloadTask: public QObject
 {
     Q_OBJECT
@@ -110,35 +108,30 @@ public:
     virtual QString getPlayUrlInfoDataKey() const = 0;
 
 protected:
-    void startDownloadStream(const QUrl &url);
-
     /**
      * @brief parse json returned from getPlayUrlInfo request.
      * start download if success, otherwise emit signal errorOccurred()
      */
     virtual void parsePlayUrlInfo(const QJsonObject &data) = 0;
-    virtual void onStreamReadyRead() = 0;
-    virtual void onStreamFinished();
-
-protected:
-    std::unique_ptr<QFile> file;
-    std::unique_ptr<QFile> openFileForWrite();
 };
 
 
+class FlvLiveDownloadDelegate;
 class LiveDownloadTask : public AbstractVideoDownloadTask
 {
     Q_OBJECT
 
     QString basePath;
-    qint64 startTimestamp;
+
+    std::unique_ptr<FlvLiveDownloadDelegate> dldDelegate;
 
 public:
     const qint64 roomId;
 
     LiveDownloadTask(qint64 roomId, int qn, const QString &path);
+    // LiveDownloadTask(const QJsonObject &json);
+    ~LiveDownloadTask();
 
-    static LiveDownloadTask *fromJsonObj(const QJsonObject &jsonObj);
     QJsonObject toJsonObj() const override;
 
     QString getTitle() const override;
@@ -159,7 +152,6 @@ public:
 
 protected:
     void parsePlayUrlInfo(const QJsonObject &data) override;
-    void onStreamReadyRead() override;
 };
 
 class VideoDownloadTask : public AbstractVideoDownloadTask
@@ -183,10 +175,15 @@ public:
 
 protected:
     VideoDownloadTask(const QJsonObject &json);
-    using AbstractVideoDownloadTask::AbstractVideoDownloadTask;
+    using AbstractVideoDownloadTask::AbstractVideoDownloadTask; // ctor
+
+    std::unique_ptr<QFile> file;
+    std::unique_ptr<QFile> openFileForWrite();
 
     void parsePlayUrlInfo(const QJsonObject &data) override;
-    void onStreamReadyRead() override;
+    void startDownloadStream(const QUrl &url);
+    void onStreamReadyRead();
+    void onStreamFinished();
 
     bool checkQn(int qnFromReply);
     bool checkSize(qint64 sizeFromReply);

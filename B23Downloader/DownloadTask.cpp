@@ -2,6 +2,7 @@
 #include "Extractor.h"
 #include "Network.h"
 #include "utils.h"
+#include "Flv.h"
 #include <QtNetwork>
 
 static QMap<int, QString> videoQnDescMap {
@@ -105,78 +106,6 @@ void AbstractVideoDownloadTask::stopDownload()
     if (httpReply != nullptr) {
         httpReply->abort();
     }
-}
-
-std::unique_ptr<QFile> AbstractVideoDownloadTask::openFileForWrite()
-{
-    auto dir = QFileInfo(path).absolutePath();
-    if (!QFileInfo::exists(dir)) {
-        if (!QDir().mkpath(dir)) {
-            emit errorOccurred("创建目录失败");
-            return nullptr;
-        }
-    }
-
-    auto file = std::make_unique<QFile>(path);
-    // WriteOnly: QFile implies Truncate (All earlier contents are lost)
-    //              unless combined with ReadOnly, Append or NewOnly.
-    if (!file->open(QIODevice::ReadWrite)) {
-        emit errorOccurred("打开文件失败");
-        return nullptr;
-    }
-
-    auto fileSize = file->size();
-    if (fileSize < downloadedBytesCnt) {
-        qDebug() << QString("filesize(%1) < bytes(%2)").arg(fileSize).arg(downloadedBytesCnt);
-        downloadedBytesCnt = fileSize;
-    }
-    file->seek(downloadedBytesCnt);
-    return file;
-}
-
-void AbstractVideoDownloadTask::startDownloadStream(const QUrl &url)
-{
-    emit getUrlInfoFinished();
-
-    // check extension of filename
-    auto ext = Utils::fileExtension(url.fileName());
-    if (downloadedBytesCnt == 0 && !path.endsWith(ext, Qt::CaseInsensitive)) {
-        path.append(ext);
-    }
-
-    file = openFileForWrite();
-    if (!file) {
-        return;
-    }
-
-    auto request = Network::Bili::Request(url);
-    if (downloadedBytesCnt != 0) {
-        request.setRawHeader("Range", "bytes=" + QByteArray::number(downloadedBytesCnt) + "-");
-    }
-
-    httpReply = Network::accessManager()->get(request);
-    connect(httpReply, &QNetworkReply::readyRead, this, &AbstractVideoDownloadTask::onStreamReadyRead);
-    connect(httpReply, &QNetworkReply::finished, this, &AbstractVideoDownloadTask::onStreamFinished);
-}
-
-void AbstractVideoDownloadTask::onStreamFinished()
-{
-    auto reply = httpReply;
-    httpReply->deleteLater();
-    httpReply = nullptr;
-
-    file.reset();
-
-    if (reply->error() == QNetworkReply::OperationCanceledError) {
-        return;
-    }
-
-    if (reply->error() != QNetworkReply::NoError) {
-        emit errorOccurred("网络请求错误");
-        return;
-    }
-
-    emit downloadFinished();
 }
 
 
@@ -317,6 +246,78 @@ void VideoDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
 
     durationInMSec = durlObj["length"].toInt();
     startDownloadStream(durlObj["url"].toString());
+}
+
+std::unique_ptr<QFile> VideoDownloadTask::openFileForWrite()
+{
+    auto dir = QFileInfo(path).absolutePath();
+    if (!QFileInfo::exists(dir)) {
+        if (!QDir().mkpath(dir)) {
+            emit errorOccurred("创建目录失败");
+            return nullptr;
+        }
+    }
+
+    auto file = std::make_unique<QFile>(path);
+    // WriteOnly: QFile implies Truncate (All earlier contents are lost)
+    //              unless combined with ReadOnly, Append or NewOnly.
+    if (!file->open(QIODevice::ReadWrite)) {
+        emit errorOccurred("打开文件失败");
+        return nullptr;
+    }
+
+    auto fileSize = file->size();
+    if (fileSize < downloadedBytesCnt) {
+        qDebug() << QString("filesize(%1) < bytes(%2)").arg(fileSize).arg(downloadedBytesCnt);
+        downloadedBytesCnt = fileSize;
+    }
+    file->seek(downloadedBytesCnt);
+    return file;
+}
+
+void VideoDownloadTask::startDownloadStream(const QUrl &url)
+{
+    emit getUrlInfoFinished();
+
+    // check extension of filename
+    auto ext = Utils::fileExtension(url.fileName());
+    if (downloadedBytesCnt == 0 && !path.endsWith(ext, Qt::CaseInsensitive)) {
+        path.append(ext);
+    }
+
+    file = openFileForWrite();
+    if (!file) {
+        return;
+    }
+
+    auto request = Network::Bili::Request(url);
+    if (downloadedBytesCnt != 0) {
+        request.setRawHeader("Range", "bytes=" + QByteArray::number(downloadedBytesCnt) + "-");
+    }
+
+    httpReply = Network::accessManager()->get(request);
+    connect(httpReply, &QNetworkReply::readyRead, this, &VideoDownloadTask::onStreamReadyRead);
+    connect(httpReply, &QNetworkReply::finished, this, &VideoDownloadTask::onStreamFinished);
+}
+
+void VideoDownloadTask::onStreamFinished()
+{
+    auto reply = httpReply;
+    httpReply->deleteLater();
+    httpReply = nullptr;
+
+    file.reset();
+
+    if (reply->error() == QNetworkReply::OperationCanceledError) {
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        emit errorOccurred("网络请求错误");
+        return;
+    }
+
+    emit downloadFinished();
 }
 
 void VideoDownloadTask::onStreamReadyRead()
@@ -468,11 +469,17 @@ LiveDownloadTask::LiveDownloadTask(qint64 roomId, int qn, const QString &path)
 {
 }
 
+LiveDownloadTask::~LiveDownloadTask() = default;
+
 QJsonObject LiveDownloadTask::toJsonObj() const
 {
-    // live download task is not saved
     return QJsonObject();
 }
+
+//LiveDownloadTask::LiveDownloadTask(const QJsonObject &json)
+//{
+
+//}
 
 QString LiveDownloadTask::getTitle() const
 {
@@ -487,7 +494,8 @@ void LiveDownloadTask::removeFile()
 int LiveDownloadTask::estimateRemainingSeconds(qint64 downBytesPerSec) const
 {
     Q_UNUSED(downBytesPerSec)
-    return QDateTime::currentSecsSinceEpoch() - startTimestamp;
+    // return duration of downloaded video instead
+    return (dldDelegate == nullptr ? 0 : dldDelegate->getDurationInMSec() / 1000);
 }
 
 QString LiveDownloadTask::getProgressStr() const
@@ -561,22 +569,46 @@ void LiveDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
     }
     qn = getQnInfoFromPlayUrlInfo(data).currentQn;
     auto url = getPlayUrlFromPlayUrlInfo(data);
+    emit getUrlInfoFinished();
 
-    downloadedBytesCnt = 0;
-    path = basePath + " " + QDateTime::currentDateTime().toString("[yyyy.MM.dd] hh.mm.ss");
-    startTimestamp = QDateTime::currentSecsSinceEpoch();
+    downloadedBytesCnt = 0;    
+    httpReply = Network::Bili::get(url);
+    dldDelegate = std::make_unique<FlvLiveDownloadDelegate>(*httpReply, [this](){
+        auto dateStr = QDateTime::currentDateTime().toString("[yyyy.MM.dd] hh.mm.ss");
+        auto path = basePath + " " + dateStr + ".flv";
+        auto file = std::make_unique<QFile>(path);
+        if (file->open(QIODevice::WriteOnly)) {
+            this->path = std::move(path);
+            return file;
+        } else {
+            return decltype(file)();
+        }
+    });
 
-    startDownloadStream(url);
+    connect(httpReply, &QNetworkReply::readyRead, this, [this]() {
+        auto ret = dldDelegate->newDataArrived();
+        if (!ret) {
+            httpReply->abort();
+            emit errorOccurred(dldDelegate->errorString());
+        }
+        downloadedBytesCnt = dldDelegate->getReadBytesCnt() + httpReply->bytesAvailable();
+    });
+
+    connect(httpReply, &QNetworkReply::finished, this, [this](){
+        auto reply = httpReply;
+        httpReply = nullptr;
+        reply->deleteLater();
+        dldDelegate.reset();
+
+        if (reply->error() == QNetworkReply::OperationCanceledError) {
+            return;
+        } else if (reply->error() != QNetworkReply::NoError) {
+            emit errorOccurred("网络请求错误");
+        } else {
+            emit errorOccurred("已结束或下载速度过慢");
+        }
+    });
 }
-
-void LiveDownloadTask::onStreamReadyRead()
-{
-    auto tmp = downloadedBytesCnt + httpReply->bytesAvailable();
-    file->write(httpReply->readAll());
-    // file->flush();
-    downloadedBytesCnt = tmp;
-}
-
 
 
 ComicDownloadTask::~ComicDownloadTask() = default;

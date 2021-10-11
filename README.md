@@ -102,9 +102,24 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit
 <br>
 
 # 开发日志
-
-+ 2021/10/02
++ **正在考虑代码重构**
   
++ 2021/10/08 - 2021/10/11
+  <details><summary>解决了一个老问题：下载的直播视频文件无法拖动进度条（需要极长时间来完成响应）</summary>
+  <p>在 <a href="#为什么想做这个东西"><i>为什么想做这个东西</i></a> 里提到过，最初我是用 <a href="https://ffmpeg.org/">ffmpeg</a> 来下载直播的，这时得到的文件并没有问题。2021 年 05 月，我尝试用 wget 直接下载而不是通过 ffmpeg，发现下载的文件有「无法拖动进度条」的问题，如果用 ffmpeg 处理 (remux) 一下就正常了：<code>ffmpeg -i &lt;raw_file&gt; -c copy &lt;remuxed_file&gt;</code>。</p>
+  <p>由于不想引入 ffmpeg 依赖，而且 FLV 还算简单，我决定自己实现 FLV remuxing.
+  首先就是读 <a href="https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10_1.pdf">Adobe FLV 文档</a>，挺少的也就 10 页。然后写了些代码解析并打印信息（FlvParse.exe 这小工具有些问题，没解析出 AMF Object，tag header 中 duration 也是错的）。</p>
+  <table><tr><td><img src="./README.assets/FlvParse-LiveSample.png/" alt="FLV Parse Result: Live-Sample" border=0></td><td><img src="./README.assets/FlvParse-Normal.png" alt="FLV Parse Result: Normal" border=0></td></tr></table>
+  <b>比对下载的直播原始数据和 B 站常规（非直播）视频 FLV，发现了以下问题：</b><ul>
+  <li>常规 FLV 文件的时间轴是从 0 开始的；而直播流 FLV 时间轴是直播已持续的时间，下载得到的文件时间轴并不是从 0 开始。在把时间轴改为从 0 开始后，PotPlayer 就能正常 seek 了</li>
+  <li>常规视频头部的 onMetaData 中有个名为 keyframes 的 Object，包含 filepositions 和 times 两个数组。同时发现：<ul><li>对于 PotPlayer，FLV 有没有 keyframes 结构基本没有区别（这怎么做到的？！）；</li><li>对于 VLC，没有 keyframes 的话 seek 会很慢（磁盘开销大，应该是顺序读过去），不过之后再 seek 就很快了（应该是把读过的部分 keyframes 记下来了）。</li></ul></li></ul>
+  <a href="https://rec.danmuji.org/">B站录播姬</a>的做法是在头部留一个 spacer 大数组，其结构是：<ul><li><code>"keyframes:{ "times":[], "filepositions":[], "spacer":[] }"</code></li></ul>
+  如果关键帧 3 秒一个的话，占用一百多 KB 就能够支撑 5 小时。<br>
+  我的实现做了个小优化，把结构改成了: <ul><li><code>"keyframes:{ "times":[], "spacer1":[], "filepositions":[], "spacer2":[] }"</code></li></ul>
+  <br><b>参考：</b><a href="https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10_1.pdf">Adoebe Flash Video File Format Specification Version 10.1.pdf</a>
+  </details>
+  
++ 2021/10/02
   <details><summary>在 Windows 上保证只运行一个实例</summary>
   <p>位置：main.cpp</p>
   <p>需求：在打开时，如果应用已在运行，则弹出已在运行的应用窗口，新运行的应用退出。</p>
@@ -122,15 +137,15 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit
 
 最开始是 Aimer 2020.11.27 的线上演唱会，想要直接下载直播流（而不是有二次编码的录屏），于是在网上找到了获取 B 站直播流 URL 的 API，用 python 来完成请求；不过当时不知道要设置 http 头部 referer 和 user-agent，用 ffmpeg 提示 403 错误……
 
-2021 年 1 月，类似地，我简单地写了个 python 脚本来下载电影。
+2021 年 1 月，类似地，我简单地写了个 python 脚本来下载电影，和之前一样，都是用 requests.get() 获取视频流 URL，然后丢给 [ffmpeg](https://ffmpeg.org/) 下载。
 
-2021 年 4 月底，Aimer 又要开线上演唱会了（5 月 1 日）。此前 cookie 都是从浏览器里复制然后硬编码在代码里的，这时我想能不能做个图形界面来完成登录保存 cookie，于是写了个 pyqt 程序来实现这一想法，功能也只有直播下载这一项（python 请求到直播流 URL 后丢给 [ffmpeg](https://ffmpeg.org/) 下载）。
+2021 年 4 月底，Aimer 又要开线上演唱会了（5 月 1 日）。此前 cookie 都是从浏览器里复制然后硬编码在代码里的，这时我想能不能做个图形界面来完成登录保存 cookie，于是写了个 pyqt 程序来实现这一想法，功能也只有直播下载这一项。
 
 2021 年 6 月底，我想做一个功能更完善的图形界面程序。当然，如果已经有满足需求的工具存在，那我再写一个就完全没有意义。
 
 - CLI 程序里，[You-Get](https://github.com/soimort/you-get) 很好，支持包括 B 站在内的各种视频网站，但毕竟是 CLI
-- 在直播方面，[B站录播姬](https://rec.danmuji.org/) 做得不错，但是没有登录功能也就没法下载付费直播
-- 浏览器扩展插件里，[Bilibili Helper](https://bilibilihelper.com/) 还可以，但是一部番剧如果我想把几十集甚至上百集全下下来的话，只能一个视频一个视频地去下载。
+- 在直播方面，[B站录播姬](https://rec.danmuji.org/) 做得不错，没有登录功能（毕竟一般的录播没有登录需求），不过查看源码发现其实是可以在其工作目录下的 config.json 里设置 cookie 的
+- 浏览器扩展插件里，[Bilibili Helper](https://bilibilihelper.com/) 还可以，但是一部番剧如果我想批量下载的话，只能一个视频一个视频地去下载，另外直播和漫画的下载也没有。
 
 于是有了 B23Downloader 这个坑，同时语言也改用 C++。
 

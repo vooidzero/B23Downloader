@@ -1,8 +1,8 @@
-VERSION = 0.9.3
+VERSION = 0.9.5
 QT       += core gui network
 
 win32-g++:contains(QMAKE_HOST.arch, x86_64):{
-    DEFINES += ENABLE_UPDATE_CHECK
+    # DEFINES += ENABLE_UPDATE_CHECK
 }
 
 # On Windows, QApplication::applicationVersion() returns VERSION defined above

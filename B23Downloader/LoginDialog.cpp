@@ -11,6 +11,8 @@ static constexpr int PollInterval = 2000; // ms
 static constexpr int MaxPollTimes = (QrCodeExpireTime * 1000 / PollInterval) - 3;
 static constexpr QColor QrCodeColor = QColor(251, 114, 153); // B站粉
 
+static constexpr auto ScanToLoginTip = "请使用B站客户端<br>扫描二维码登录";
+
 LoginDialog::LoginDialog(QWidget *parent)
   : QDialog(parent)
 {
@@ -18,7 +20,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     qrCodeLabel = new QLabel(this);
     qrCodeLabel->setFixedSize(123, 123);
     qrCodeLabel->setAlignment(Qt::AlignCenter);
-    tipLabel= new QLabel("扫描二维码登录", this);
+    tipLabel= new QLabel(ScanToLoginTip, this);
     tipLabel->setAlignment(Qt::AlignCenter);
     auto font = tipLabel->font();
     font.setPointSize(11);
@@ -126,7 +128,7 @@ void LoginDialog::getLoginUrlFinished()
     QString url = data["url"].toString();
     oauthKey = data["oauthKey"].toString();
     setQrCode(url);
-    tipLabel->setText("扫描二维码登录");
+    tipLabel->setText(ScanToLoginTip);
     polledTimes = 0;
     pollTimer->start();
 }

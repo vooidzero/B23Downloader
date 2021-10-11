@@ -215,9 +215,11 @@ void AboutWidget::showEvent(QShowEvent *event)
 
 void AboutWidget::hideEvent(QHideEvent *event)
 {
+#ifdef ENABLE_UPDATE_CHECK
     if (d->httpReply != nullptr) {
         d->httpReply->abort();
     }
+#endif
     d->textView->clear();
     QWidget::hideEvent(event);
 }

@@ -22,6 +22,10 @@ MainWindow::~MainWindow() = default;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+#ifdef APP_VERSION
+    QApplication::setApplicationVersion(APP_VERSION);
+#endif
+
     Network::accessManager()->setCookieJar(Settings::inst()->getCookieJar());
     setWindowTitle("B23Downloader");
     setCentralWidget(new QWidget);
@@ -89,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(tabs);
 
     setStyleSheet("QMainWindow{background-color:white;}QTableWidget{border:none;}");
-    setMinimumSize(640, 360);
+    setMinimumSize(650, 360);
     QTimer::singleShot(0, this, [this]{ resize(minimumSize()); });
 
     urlLineEdit->setFocus();

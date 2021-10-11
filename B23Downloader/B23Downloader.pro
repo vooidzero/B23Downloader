@@ -1,6 +1,15 @@
 VERSION = 0.9.3
 QT       += core gui network
 
+win32-g++:contains(QMAKE_HOST.arch, x86_64):{
+    DEFINES += ENABLE_UPDATE_CHECK
+}
+
+# On Windows, QApplication::applicationVersion() returns VERSION defined above
+# But on Linux, QApplication::applicationVersion() returns empty string
+!windows:DEFINES += APP_VERSION=\\\"$$VERSION\\\"
+
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
@@ -16,6 +25,7 @@ SOURCES += \
     DownloadDialog.cpp \
     DownloadTask.cpp \
     Extractor.cpp \
+    Flv.cpp \
     LoginDialog.cpp \
     MainWindow.cpp \
     MyTabWidget.cpp \
@@ -31,6 +41,7 @@ HEADERS += \
     DownloadDialog.h \
     DownloadTask.h \
     Extractor.h \
+    Flv.h \
     LoginDialog.h \
     MainWindow.h \
     MyTabWidget.h \

@@ -2,6 +2,24 @@
 #include "Network.h"
 #include <QtWidgets>
 
+struct VersionInfo;
+
+class AboutWidgetPrivate
+{
+    AboutWidget *p;
+public:
+    AboutWidgetPrivate(AboutWidget *p): p(p) {}
+    QTextEdit *textView;
+
+#ifdef ENABLE_UPDATE_CHECK
+    std::unique_ptr<QNetworkReply> httpReply;
+    void startGetVersionInfo(const QString &url, std::function<VersionInfo(QNetworkReply*)> parser);
+    void setUpdateInfoLabel(const VersionInfo &);
+#endif // ENABLE_UPDATE_CHECK
+};
+
+
+#ifdef ENABLE_UPDATE_CHECK
 struct VersionInfo
 {
     QString ver;
@@ -9,9 +27,7 @@ struct VersionInfo
     QString desc;
 };
 
-static const auto ReleaseExecutableSuffix =
-        "win_64.exe"
-;
+static const auto ReleaseExecutableSuffix = "exe";
 
 /**
  * @brief if versionA > versionB, return 1;
@@ -79,7 +95,52 @@ VersionInfo parseVerInfoFromNjugit(QNetworkReply *reply)
     return verInfo;
 }
 
-AboutWidget::AboutWidget(QWidget *parent) : QWidget(parent)
+void AboutWidgetPrivate::startGetVersionInfo(const QString &url, std::function<VersionInfo (QNetworkReply *)> parser)
+{
+    auto rqst = QNetworkRequest(QUrl(url));
+    httpReply.reset(Network::accessManager()->get(rqst));
+    textView->setText("请求中...");
+    p->setEnabled(false);
+    p->connect(httpReply.get(), &QNetworkReply::finished, p, [this, parser]{
+        p->setEnabled(true);
+        auto reply = httpReply.release();
+        reply->deleteLater();
+
+        if (reply->error() == QNetworkReply::OperationCanceledError) {
+            return;
+        } else if (reply->error() != QNetworkReply::NoError) {
+            textView->setText("<font color=\"red\">网络错误</font>");
+            return;
+        }
+
+        setUpdateInfoLabel(parser(reply));
+    });
+}
+
+void AboutWidgetPrivate::setUpdateInfoLabel(const VersionInfo &verInfo)
+{
+    if (verInfo.exeDownloadUrl.isEmpty()) {
+        textView->clear();
+        return;
+    }
+
+    if (cmpVersion(QApplication::applicationVersion(), verInfo.ver) >= 0) {
+        textView->setText("当前已是最新版本, 无需更新。");
+        return;
+    }
+
+     textView->setText(
+        QStringLiteral("<b>版本 v") + verInfo.ver +
+        QStringLiteral("</b><br>下载链接: <a href=\"") + verInfo.exeDownloadUrl + "\">" + verInfo.exeDownloadUrl +
+        "</a><br>" + verInfo.desc
+     );
+}
+#endif // ENABLE_UPDATE_CHECK
+
+
+
+AboutWidget::AboutWidget(QWidget *parent)
+    : QWidget(parent), d(new AboutWidgetPrivate(this))
 {
     auto layout = new QVBoxLayout(this);
 
@@ -97,6 +158,7 @@ AboutWidget::AboutWidget(QWidget *parent) : QWidget(parent)
                 " 或 <a href=\"https://git.nju.edu.cn/zero/B23Downloader\">NJU Git</a>"
         );
     auto infoLabel = new QLabel(info);
+    infoLabel->setOpenExternalLinks(true);
 
     auto infoLayout = new QHBoxLayout;
     infoLayout->addWidget(iconLabel);
@@ -107,13 +169,15 @@ AboutWidget::AboutWidget(QWidget *parent) : QWidget(parent)
     layout->addSpacing(10);
     layout->addLayout(infoLayout);
 
-    newVersionInfoTextView = new QTextEdit;
-    newVersionInfoTextView->setReadOnly(true);
-    newVersionInfoTextView->setFrameShape(QFrame::NoFrame);
-    newVersionInfoTextView->setMinimumWidth(320);
+    auto textView = new QTextBrowser;
+    d->textView = textView;
+    textView->setOpenExternalLinks(true);
+    textView->setFrameShape(QFrame::NoFrame);
+    textView->setMinimumWidth(320);
     layout->addSpacing(10);
-    layout->addWidget(newVersionInfoTextView, 1, Qt::AlignCenter);
+    layout->addWidget(textView, 1, Qt::AlignCenter);
 
+#ifdef ENABLE_UPDATE_CHECK
     auto checkUpdateViaGithubBtn = new QPushButton("检查更新 (via GitHub)");
     auto checkUpdateViaNjugitBtn = new QPushButton("检查更新 (via NJU Git)");
     auto checkUpdateLayout = new QHBoxLayout;
@@ -124,23 +188,24 @@ AboutWidget::AboutWidget(QWidget *parent) : QWidget(parent)
     layout->addLayout(checkUpdateLayout);
 
     connect(checkUpdateViaGithubBtn, &QPushButton::clicked, this, [this]{
-        startGetVersionInfo(
+        d->startGetVersionInfo(
             "https://api.github.com/repos/vooidzero/B23Downloader/releases/latest",
             &parseVerInfoFromGithub
         );
     });
 
     connect(checkUpdateViaNjugitBtn, &QPushButton::clicked, this, [this]{
-        startGetVersionInfo(
+        d->startGetVersionInfo(
             "https://git.nju.edu.cn/api/v4/projects/3171/releases",
             &parseVerInfoFromNjugit
         );
     });
+#endif // ENABLE_UPDATE_CHECK
 }
 
 void AboutWidget::showEvent(QShowEvent *event)
 {
-    newVersionInfoTextView->setText(QStringLiteral(
+    d->textView->setText(QStringLiteral(
         "<center>こんなちいさな星座なのに</center>"
         "<center>ここにいたこと 気付いてくれて</center>"
         "<center>ありがとう！</center>"
@@ -150,51 +215,9 @@ void AboutWidget::showEvent(QShowEvent *event)
 
 void AboutWidget::hideEvent(QHideEvent *event)
 {
-    if (httpReply != nullptr) {
-        httpReply->abort();
+    if (d->httpReply != nullptr) {
+        d->httpReply->abort();
     }
-    newVersionInfoTextView->clear();
+    d->textView->clear();
     QWidget::hideEvent(event);
-}
-
-void AboutWidget::startGetVersionInfo(const QString &url, std::function<VersionInfo (QNetworkReply *)> parser)
-{
-    auto rqst = QNetworkRequest(QUrl(url));
-    httpReply = Network::accessManager()->get(rqst);
-    newVersionInfoTextView->setText("请求中...");
-    setEnabled(false);
-    connect(this->httpReply, &QNetworkReply::finished, this, [this, parser]{
-        setEnabled(true);
-        auto reply = httpReply;
-        httpReply = nullptr;
-        reply->deleteLater();
-
-        if (reply->error() == QNetworkReply::OperationCanceledError) {
-            return;
-        } else if (reply->error() != QNetworkReply::NoError) {
-            newVersionInfoTextView->setText("<font color=\"red\">网络错误</font>");
-            return;
-        }
-
-        setUpdateInfoLabel(parser(reply));
-    });
-}
-
-void AboutWidget::setUpdateInfoLabel(const VersionInfo &verInfo)
-{
-    if (verInfo.exeDownloadUrl.isEmpty()) {
-        newVersionInfoTextView->clear();
-        return;
-    }
-
-    if (cmpVersion(QApplication::applicationVersion(), verInfo.ver) >= 0) {
-        newVersionInfoTextView->setText("当前已是最新版本, 无需更新。");
-        return;
-    }
-
-     newVersionInfoTextView->setText(
-        QStringLiteral("<b>版本 v") + verInfo.ver +
-        QStringLiteral("</b><br>下载链接:") + verInfo.exeDownloadUrl +
-        "<br>" + verInfo.desc
-     );
 }

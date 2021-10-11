@@ -3,10 +3,7 @@
 
 #include <QWidget>
 
-class QTextEdit;
-class QNetworkReply;
-
-struct VersionInfo;
+class AboutWidgetPrivate;
 
 class AboutWidget : public QWidget
 {
@@ -18,11 +15,8 @@ protected:
     void hideEvent(QHideEvent *event) override;
 
 private:
-    QTextEdit *newVersionInfoTextView;
-    QNetworkReply *httpReply = nullptr;
-
-    void startGetVersionInfo(const QString &url, std::function<VersionInfo(QNetworkReply*)> parser);
-    void setUpdateInfoLabel(const VersionInfo &);
+    friend class AboutWidgetPrivate;
+    std::unique_ptr<AboutWidgetPrivate> d;
 };
 
 #endif // ABOUTWIDGET_H

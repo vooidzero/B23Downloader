@@ -36,9 +36,36 @@ TaskTableWidget::TaskTableWidget(QWidget *parent)
     connect(saveTasksTimer, &QTimer::timeout, this, &TaskTableWidget::save);
 }
 
+static QAction* createOpenDirAct(QString path)
+{
+    auto openDirAct = new QAction("打开文件夹");
+    QObject::connect(openDirAct, &QAction::triggered, [path=std::move(path)](){
+#ifdef Q_OS_WIN
+        QProcess::startDetached("explorer.exe", {"/select,", QDir::toNativeSeparators(path)});
+#else
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absolutePath()));
+#endif
+    });
+    return openDirAct;
+}
+
 void TaskTableWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu contextMenu(this);
+    auto selection = selectedIndexes();
+    if (selection.size() == 1) {
+        auto cell = cellWidget(selection.first().row());
+        auto path = cell->getTask()->getPath();
+        if (QFileInfo::exists(path)) {
+            auto openAct = new QAction("打开");
+            connect(openAct, &QAction::triggered, [path](){
+                QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+            });
+            contextMenu.addAction(openAct);
+            contextMenu.addAction(createOpenDirAct(std::move(path)));
+        }
+    }
+
     contextMenu.addAction(startAllAct);
     contextMenu.addAction(stopAllAct);
     contextMenu.addAction(removeAllAct);
@@ -355,6 +382,7 @@ TaskCellWidget::TaskCellWidget(AbstractDownloadTask *task, QWidget *parent)
 
     connect(task, &AbstractDownloadTask::getUrlInfoFinished, this, [this]{
        initProgressWidgets();
+       // titleLabel->setText(this->task->getTitle());
        qnDescLabel->setText(this->task->getQnDescription());
        startCalcDownRate();
     });

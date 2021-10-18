@@ -117,27 +117,29 @@ public:
 
     QString longTitle()
     {
+        // 如果 section/item 标题为"正片", 则视其为空
+        // 比如电影《星际穿越》, 它的标题为"星际穿越", 有两个section("正片"和"预告花絮"),
+        //     标题为"正片"的section包含一个标题为"正片"的视频
+        auto clearIfZP = [](QString &s) {
+            if (s == QStringLiteral("正片")) {
+                s.clear();
+            }
+        };
+
         QString ret;
-        if (parent() != nullptr && parent() != treeWidget()->topLevelItem(0)) {
-            // 如果 section/item 标题为"正片", 则视其为空
-            // 比如电影《星际穿越》, 它的标题为"星际穿越", 有两个section("正片"和"预告花絮"),
-            //     标题为"正片"的section包含一个标题为"正片"的视频
-            auto clearIfZP = [](QString &s) {
-                if (s == QStringLiteral("正片")) {
-                    s.clear();
-                }
-            };
+        if (parent() != nullptr) {
             auto sectionTitle = parent()->text(0);
             auto itemTitle = text(0);
             clearIfZP(sectionTitle);
             clearIfZP(itemTitle);
             if (sectionTitle.isEmpty()) {
                 ret = itemTitle;
-            } else {
+            } else if (!itemTitle.isEmpty()) {
                 ret = sectionTitle + " " + itemTitle;
             }
         } else {
             ret = text(0);
+            clearIfZP(ret);
         }
         return Utils::legalizedFileName(ret);
     }

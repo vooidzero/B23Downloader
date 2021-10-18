@@ -6,7 +6,6 @@
 #include <QtNetwork>
 
 static QMap<int, QString> videoQnDescMap {
-    {125, "HDR 真彩"},
     {120, "4K 超清"},
     {116, "1080P 60帧"},
     {112, "1080P 高码率"},
@@ -353,7 +352,7 @@ PgcDownloadTask::PgcDownloadTask(const QJsonObject &json)
 QNetworkReply *PgcDownloadTask::getPlayUrlInfo(qint64 epId, int qn)
 {
     auto api = "https://api.bilibili.com/pgc/player/web/playurl";
-    auto query = QString("?ep_id=%1&qn=%2").arg(epId).arg(qn);
+    auto query = QString("?ep_id=%1&qn=%2&fourk=1").arg(epId).arg(qn);
     return Network::Bili::get(api + query);
 }
 
@@ -390,7 +389,7 @@ PugvDownloadTask::PugvDownloadTask(const QJsonObject &json)
 QNetworkReply *PugvDownloadTask::getPlayUrlInfo(qint64 epId, int qn)
 {
     auto api = "https://api.bilibili.com/pugv/player/web/playurl";
-    auto query = QString("?ep_id=%1&qn=%2").arg(epId).arg(qn);
+    auto query = QString("?ep_id=%1&qn=%2&fourk=1").arg(epId).arg(qn);
     return Network::Bili::get(api + query);
 }
 
@@ -427,7 +426,7 @@ UgcDownloadTask::UgcDownloadTask(const QJsonObject &json)
 QNetworkReply *UgcDownloadTask::getPlayUrlInfo(qint64 aid, qint64 cid, int qn)
 {
     auto api = "https://api.bilibili.com/x/player/playurl";
-    auto query = QString("?avid=%1&cid=%2&qn=%3").arg(aid).arg(cid).arg(qn);
+    auto query = QString("?avid=%1&cid=%2&qn=%3&fourk=1").arg(aid).arg(cid).arg(qn);
     return Network::Bili::get(api + query);
 }
 
@@ -569,6 +568,12 @@ void LiveDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
     }
     qn = getQnInfoFromPlayUrlInfo(data).currentQn;
     auto url = getPlayUrlFromPlayUrlInfo(data);
+    auto ext = Utils::fileExtension(QUrl(url).fileName());
+    if (ext != ".flv") {
+        emit errorOccurred("非FLV");
+        return;
+    }
+
     emit getUrlInfoFinished();
 
     downloadedBytesCnt = 0;    

@@ -106,7 +106,7 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit
   
 + 2021/10/08 - 2021/10/11
   <details><summary>解决了一个老问题：下载的直播视频文件无法拖动进度条（需要极长时间来完成响应）</summary>
-  <p>在 <a href="#为什么想做这个东西"><i>为什么想做这个东西</i></a> 里提到过，最初我是用 <a href="https://ffmpeg.org/">ffmpeg</a> 来下载直播的，这时得到的文件并没有问题。2021 年 05 月，我尝试用 wget 直接下载而不是通过 ffmpeg，发现下载的文件有「无法拖动进度条」的问题，如果用 ffmpeg 处理 (remux) 一下就正常了：<code>ffmpeg -i &lt;raw_file&gt; -c copy &lt;remuxed_file&gt;</code>。</p>
+  <p>最初我是用 <a href="https://ffmpeg.org/">ffmpeg</a> 来下载直播的，那时得到的文件并没有问题。2021 年 05 月，我尝试用 wget 直接下载而不是通过 ffmpeg，发现下载的文件有「无法拖动进度条」的问题，如果用 ffmpeg 处理 (remux) 一下就正常了：<code>ffmpeg -i &lt;raw_file&gt; -c copy &lt;remuxed_file&gt;</code>。</p>
   <p>由于不想引入 ffmpeg 依赖，而且 FLV 还算简单，我决定自己实现 FLV remuxing.
   首先就是读 <a href="https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10_1.pdf">Adobe FLV 文档</a>，挺少的也就 10 页。然后写了些代码解析并打印信息（FlvParse.exe 这小工具有些问题，没解析出 AMF Object，tag header 中 duration 也是错的）。</p>
   <table><tr><td><img src="./README.assets/FlvParse-LiveSample.png/" alt="FLV Parse Result: Live-Sample" border=0></td><td><img src="./README.assets/FlvParse-Normal.png" alt="FLV Parse Result: Normal" border=0></td></tr></table>
@@ -132,18 +132,6 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit
   </details>
 
 <br>
-
-### 为什么想做这个东西？
-
-最开始是 Aimer 2020.11.27 的线上演唱会，想要直接下载直播流（而不是有二次编码的录屏），于是在网上找到了获取 B 站直播流 URL 的 API，用 python 来完成请求；不过当时不知道要设置 http 头部 referer 和 user-agent，用 ffmpeg 提示 403 错误……
-
-2021 年 1 月，类似地，我简单地写了个 python 脚本来下载电影，和之前一样，都是用 requests.get() 获取视频流 URL，然后丢给 [ffmpeg](https://ffmpeg.org/) 下载。
-
-2021 年 4 月底，Aimer 又要开线上演唱会了（5 月 1 日）。此前 cookie 都是从浏览器里复制然后硬编码在代码里的，这时我想能不能做个图形界面来完成登录保存 cookie，于是写了个 pyqt 程序来实现这一想法，功能也只有直播下载这一项。
-
-2021 年 6 月底，我想做一个功能更完善的图形界面程序。于是有了 B23Downloader 这个坑，同时语言也改用 C++。
-
-
 
 >  最后感谢 [SocialSisterYi/bilibili-API-collect: 哔哩哔哩-API收集整理](https://github.com/SocialSisterYi/bilibili-API-collect)，虽然 B23Downloader 里用的 API 有很大一部分是我自己后面找的。以后有时间也为这个仓库贡献一下。
 

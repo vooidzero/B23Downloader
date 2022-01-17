@@ -1,3 +1,5 @@
+// Created by voidzero <vooidzero.github@qq.com>
+
 #include "utils.h"
 #include <QPainter>
 #include <QHelpEvent>
@@ -127,7 +129,8 @@ QString Utils::paddedNum(int num, int width)
 
 QString Utils::legalizedFileName(QString title)
 {
-    return title.replace('\\', u'＼').replace('/', u'／').replace(':', u'：')
+    return title.simplified()
+            .replace('\\', u'＼').replace('/', u'／').replace(':', u'：')
             .replace('*', u'＊').replace('?', u'？').replace('"', u'“')
             .replace('<', u'＜').replace('>', u'＞').replace('|', u'｜');
     // 整个路径的合法性检查可以参考 https://stackoverflow.com/q/62771

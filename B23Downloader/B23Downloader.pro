@@ -1,5 +1,7 @@
-VERSION = 0.9.5
+VERSION = 1.0
 QT       += core gui network
+
+windows:RC_LANG = 0x0004 # 将.exe文件简介中的语言设为中文(简体)。除此之外没有任何作用
 
 win32-g++:contains(QMAKE_HOST.arch, x86_64):{
     # DEFINES += ENABLE_UPDATE_CHECK
@@ -33,6 +35,10 @@ SOURCES += \
     QrCode.cpp \
     Settings.cpp \
     TaskTable.cpp \
+    api.cpp \
+#    avformat/flv.cpp \
+#    avformat/mp4.cpp \
+#    biliApi/RqstHandler.cpp \
     main.cpp \
     utils.cpp
 
@@ -49,6 +55,14 @@ HEADERS += \
     QrCode.h \
     Settings.h \
     TaskTable.h \
+#    avformat/avio.h \
+#    avformat/flv.h \
+#    avformat/mp4.h \
+#    biliApi/ContentDetail.h \
+#    biliApi/PlayUrl.h \
+#    biliApi/RqstHandler.h \
+#    biliApi/RqstTemplate.h \
+    common.h \
     utils.h
 
 # Default rules for deployment.

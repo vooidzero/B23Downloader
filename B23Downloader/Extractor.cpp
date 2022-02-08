@@ -1,3 +1,5 @@
+// Created by voidzero <vooidzero.github@qq.com>
+
 #include "utils.h"
 #include "Extractor.h"
 #include "Network.h"
@@ -188,16 +190,18 @@ QJsonObject Extractor::getReplyJsonObj(const QString &requiredKey)
 
 QString Extractor::getReplyText()
 {
-    httpReply->deleteLater();
-    if (httpReply->error() == QNetworkReply::OperationCanceledError) {
+    auto reply = httpReply;
+    httpReply = nullptr;
+    reply->deleteLater();
+    if (reply->error() == QNetworkReply::OperationCanceledError) {
         return QString();
     }
-    if (httpReply->error() != QNetworkReply::NoError) {
+    if (reply->error() != QNetworkReply::NoError) {
         emit errorOccurred("网络请求错误");
         return QString();
     }
 
-    return QString::fromUtf8(httpReply->readAll());
+    return QString::fromUtf8(reply->readAll());
 }
 
 void Extractor::tryRedirect(const QUrl &url)
@@ -261,6 +265,7 @@ static int epFlags(int epStatus)
     case 8: case 9:
     case 12:
         return ContentItemFlag::PayOnly;
+    // case 14: 限定 https://www.bilibili.com/bangumi/media/md28234679
     default:
         qDebug() << "unknown ep status" << epStatus;
         return ContentItemFlag::NoFlags;
@@ -461,11 +466,11 @@ void Extractor::liveActivityFinished()
     }
 
     auto parseFailed = [this]{
-        emit errorOccurred("解析活动页面失败.\n建议尝试房间号链接, 比如 <em>live.bilibili.com/22586886</em>");
+        emit errorOccurred("解析活动页面失败。<br>建议尝试数字房间号链接, 比如<em>live.bilibili.com/22586886</em>");
     };
 
-    auto m = QRegExp(R"(window.__BILIACT_ENV__\s?=\s?JSON.parse\(([^)]+)\))").match(text);
-    auto platform = m.captured(1);
+    auto m = QRegExp(R"(window.__BILIACT_ENV__\s?=([^;]+);)").match(text);
+    auto platform = m.captured(1); // null if no match
     if (platform.contains("H5")) {
         m = QRegExp(R"(\\?"jumpUrl\\?"\s?:\s?\\?"([^"\\]+)\\?")").match(text, m.capturedEnd(0));
         if (m.hasMatch()) {
@@ -614,7 +619,7 @@ static QString comicEpTitle(const QString &shortTitle, const QString &title, int
             return Utils::paddedNum(index, indexWidth);
         }
     }
-    return shortTitle + " " + title;
+    return (title.isEmpty() ? shortTitle : shortTitle + " " + title);
 }
 
 void Extractor::comicFinished()

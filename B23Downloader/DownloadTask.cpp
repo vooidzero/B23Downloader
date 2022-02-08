@@ -1,3 +1,5 @@
+// Created by voidzero <vooidzero.github@qq.com>
+
 #include "DownloadTask.h"
 #include "Extractor.h"
 #include "Network.h"
@@ -5,6 +7,9 @@
 #include "Flv.h"
 #include <QtNetwork>
 
+// 127: 8K 超高清
+// 126: 杜比视界
+// 125: HDR 真彩
 static QMap<int, QString> videoQnDescMap {
     {120, "4K 超清"},
     {116, "1080P 60帧"},
@@ -24,6 +29,28 @@ static QMap<int, QString> liveQnDescMap {
     {80, "流畅"}
 };
 
+
+inline bool jsonValue2Bool(const QJsonValue &val, bool defaultVal = false) {
+    if (val.isNull() || val.isUndefined()) {
+        return defaultVal;
+    }
+    if (val.isBool()) {
+        return val.toBool();
+    }
+    if (val.isDouble()) {
+        return static_cast<bool>(val.toInt());
+    }
+    if (val.isString()) {
+        auto str = val.toString().toLower();
+        if (str == "1" || str == "true") {
+            return true;
+        }
+        if (str == "0" || str == "false") {
+            return false;
+        }
+    }
+    return defaultVal;
+}
 
 
 AbstractDownloadTask::~AbstractDownloadTask()
@@ -219,13 +246,18 @@ bool VideoDownloadTask::checkSize(qint64 sizeFromReply)
 
 void VideoDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
 {
-    auto qnInfo = getQnInfoFromPlayUrlInfo(data);
-    if (!checkQn(qnInfo.currentQn)) {
-        return;
+    if (jsonValue2Bool(data["is_preview"], 0)) {
+        if (!jsonValue2Bool(data["has_paid"], 1)) {
+            emit errorOccurred("该视频需要大会员/付费");
+            return;
+        } /* else {
+            emit errorOccurred("该视频为预览");
+            return;
+        } */
     }
 
-    if (data["has_paid"].toInt(1) == 0) {
-        emit errorOccurred("该视频需要大会员/付费");
+    auto qnInfo = getQnInfoFromPlayUrlInfo(data);
+    if (!checkQn(qnInfo.currentQn)) {
         return;
     }
 

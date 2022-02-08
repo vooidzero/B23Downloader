@@ -366,12 +366,9 @@ void Extractor::pgcFinished()
         if (result.isEmpty()) {
             return;
         }
-
         auto userIsVip = (result["vip_info"].toObject()["status"].toInt() == 1);
         auto userHasPaid = (result["pay"].toInt(1) == 1);
-
-        if (userIsVip || userHasPaid) {
-            // 不知道番剧同时有大会员观看和付费（抢先）观看会是怎样...找不到样例
+        if (!userHasPaid) {
             for (auto &video : pgcRes->sections.first().episodes) {
                 auto notFree = (video.flags & ContentItemFlag::VipOnly) or (video.flags & ContentItemFlag::PayOnly);
                 if (notFree && !userHasPaid) {

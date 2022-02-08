@@ -576,7 +576,8 @@ void DownloadDialog::setupUi()
     pathLabel = new ElidedTextLabel;
     auto lastDir = Settings::inst()->value("lastDir").toString();
     if (lastDir.isEmpty() || !QDir(lastDir).exists()) {
-        pathLabel->setText(QDir::currentPath());
+        auto appDir = QDir{QCoreApplication::applicationDirPath()};
+        pathLabel->setText(appDir.absoluteFilePath("Downloads"));
     } else {
         pathLabel->setText(lastDir);
     }

@@ -209,7 +209,9 @@ void TaskTableWidget::removeAll()
         cellWidget(row)->remove();
     }
     activeTaskCnt = 0;
-    clearContents();
+    for (int row = rowCnt - 1; row >= 0; row--) {
+        removeRow(row);
+    }
     if (rowCnt != 0) {
         setDirty();
     }

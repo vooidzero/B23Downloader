@@ -39,7 +39,10 @@ public:
     virtual void removeFile() = 0;
 
 signals:
+    //20220421 modify
+//    void downloadFinished(QString mode);
     void downloadFinished();
+    //20220421 modify
     void errorOccurred(const QString &errorString);
     void getUrlInfoFinished();
 
@@ -181,12 +184,22 @@ protected:
     std::unique_ptr<QFile> openFileForWrite();
 
     void parsePlayUrlInfo(const QJsonObject &data) override;
-    void startDownloadStream(const QUrl &url);
+    //20210421 new add
+    bool ishavevalidfile(const QString &filename,const int &filesize);
+    //20210421 new add
+    //20210421 modify
+//    void startDownloadStream(const QUrl &url);
+    void startDownloadStream(const QUrl &url,const int &filesize);
+    //20210421 modify
     void onStreamReadyRead();
+    //20220421 modify
     void onStreamFinished();
+//    void onStreamFinished();
+    //20220421 modify
 
     bool checkQn(int qnFromReply);
     bool checkSize(qint64 sizeFromReply);
+
 };
 
 class PgcDownloadTask : public VideoDownloadTask

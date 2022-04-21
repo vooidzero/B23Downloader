@@ -62,7 +62,11 @@ AbstractDownloadTask::~AbstractDownloadTask()
 
 QString AbstractDownloadTask::getTitle() const
 {
-    return QFileInfo(path).baseName();
+    //20220421 modify
+    QStringList strlist=path.split("\/");
+    QString a=strlist[strlist.length()-1];
+    return a;
+    //20220421 modify
 }
 
 AbstractDownloadTask *AbstractDownloadTask::fromJsonObj(const QJsonObject &json)
@@ -276,7 +280,11 @@ void VideoDownloadTask::parsePlayUrlInfo(const QJsonObject &data)
     }
 
     durationInMSec = durlObj["length"].toInt();
-    startDownloadStream(durlObj["url"].toString());
+    //20220421 modify
+//    startDownloadStream(durlObj["url"].toString());
+    startDownloadStream(durlObj["url"].toString(),durlObj["size"].toInt());
+    //20220421 modify
+
 }
 
 std::unique_ptr<QFile> VideoDownloadTask::openFileForWrite()
@@ -305,8 +313,29 @@ std::unique_ptr<QFile> VideoDownloadTask::openFileForWrite()
     file->seek(downloadedBytesCnt);
     return file;
 }
+//20210421 new add
+bool VideoDownloadTask::ishavevalidfile(const QString &filename,const int &filesize)
+{
+    QFile* qf=new QFile(filename);
+//    if(QFile::exists(filename))
+    if(qf->exists())
+    {
+//        qf->setFileName(filename);
+//        QFileInfo* qfi=new QFileinfo(filename);
+        if(qf->size()!=filesize)
+//        if(QFile::size(filename)!=filesize)
+            return false;
+        else
+            return true;
 
-void VideoDownloadTask::startDownloadStream(const QUrl &url)
+    }
+    else
+    {
+        return false;
+    }
+}
+//20210421 new add
+void VideoDownloadTask::startDownloadStream(const QUrl &url,const int &filesize)
 {
     emit getUrlInfoFinished();
 
@@ -315,40 +344,59 @@ void VideoDownloadTask::startDownloadStream(const QUrl &url)
     if (downloadedBytesCnt == 0 && !path.endsWith(ext, Qt::CaseInsensitive)) {
         path.append(ext);
     }
+    //20210421 modify
 
-    file = openFileForWrite();
-    if (!file) {
-        return;
+    if(ishavevalidfile(path,filesize)==false)
+    //20210421 modify
+    {
+        file = openFileForWrite();
+        if (!file) {
+            return;
+        }
+
+        auto request = Network::Bili::Request(url);
+        if (downloadedBytesCnt != 0) {
+            request.setRawHeader("Range", "bytes=" + QByteArray::number(downloadedBytesCnt) + "-");
+        }
+
+        httpReply = Network::accessManager()->get(request);
+        connect(httpReply, &QNetworkReply::readyRead, this, &VideoDownloadTask::onStreamReadyRead);
+        connect(httpReply, &QNetworkReply::finished, this, &VideoDownloadTask::onStreamFinished);
+//        emit VideoDownloadTask::onStreamFinished("1");
     }
-
-    auto request = Network::Bili::Request(url);
-    if (downloadedBytesCnt != 0) {
-        request.setRawHeader("Range", "bytes=" + QByteArray::number(downloadedBytesCnt) + "-");
+    else
+    {
+//        onStreamFinished("2");
+        emit downloadFinished();
+//        connect(Q_NULLPTR, &QNetworkReply::finished, this, &VideoDownloadTask::onStreamFinished);
     }
-
-    httpReply = Network::accessManager()->get(request);
-    connect(httpReply, &QNetworkReply::readyRead, this, &VideoDownloadTask::onStreamReadyRead);
-    connect(httpReply, &QNetworkReply::finished, this, &VideoDownloadTask::onStreamFinished);
 }
 
 void VideoDownloadTask::onStreamFinished()
 {
-    auto reply = httpReply;
-    httpReply->deleteLater();
-    httpReply = nullptr;
+//    if(mode=="")
+//    {
+        auto reply = httpReply;
+        httpReply->deleteLater();
+        httpReply = nullptr;
 
-    file.reset();
+        file.reset();
 
-    if (reply->error() == QNetworkReply::OperationCanceledError) {
-        return;
-    }
+        if (reply->error() == QNetworkReply::OperationCanceledError) {
+            return;
+        }
 
-    if (reply->error() != QNetworkReply::NoError) {
-        emit errorOccurred("网络请求错误");
-        return;
-    }
+        if (reply->error() != QNetworkReply::NoError) {
+            emit errorOccurred("网络请求错误");
+            return;
+        }
 
-    emit downloadFinished();
+        emit downloadFinished();
+//    }
+//    else
+//    {
+//                emit downloadFinished();
+//    }
 }
 
 void VideoDownloadTask::onStreamReadyRead()
@@ -514,7 +562,8 @@ QJsonObject LiveDownloadTask::toJsonObj() const
 
 QString LiveDownloadTask::getTitle() const
 {
-    return QFileInfo(basePath).baseName();
+    QString a=QFileInfo(basePath).baseName();
+    return a;
 }
 
 void LiveDownloadTask::removeFile()

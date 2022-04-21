@@ -818,8 +818,11 @@ void DownloadDialog::selectPath()
 
 QList<AbstractDownloadTask*> DownloadDialog::getDownloadTasks()
 {
+    int iindex=0;
     Settings::inst()->setValue("lastDir", pathLabel->text());
-
+    ////20220421 new add
+    QList<QString>* itemtitlelist=new QList<QString>;
+    ////20220421 new add
     QList<AbstractDownloadTask*> tasks;
     auto dir = QDir(pathLabel->text());
     int qn = (qnComboBox == nullptr ? 0 : qnComboBox->currentData().toInt());
@@ -830,14 +833,41 @@ QList<AbstractDownloadTask*> DownloadDialog::getDownloadTasks()
     } else {
         QList<std::tuple<qint64, QString>> metaInfos;
         for (auto item : tree->selectedItems()) {
+            ////新增
+            iindex=iindex+1;
+            int sameitemindex=0;
+            ////新增
             auto videoItem = static_cast<ContentTreeItem*>(item);
             if (videoItem->type() != ContentTreeItem::ContentItemType) {
                 continue;
             }
             auto itemTitle = videoItem->longTitle();
+            //单一个item时，itemtitle=""
+            if(itemTitle=="")
+                itemTitle=title;
+            if(itemtitlelist->count()==0)
+                itemtitlelist->append(itemTitle);
+            else
+            {
+                QString tempstr=itemTitle;
+                while(itemtitlelist->contains(tempstr))
+                {
+                    sameitemindex=sameitemindex+1;
+                    tempstr=itemTitle+(QChar)sameitemindex;
+//                    char* sameitemindex=
+                }
+                itemTitle=tempstr;
+                itemtitlelist->append(itemTitle);
+            }
+            //20220421 new add
+            QString tempqstr=(QString)'+';
+            itemTitle=QString::number(iindex,10)+tempqstr+itemTitle;
+            //20220421 new add
             metaInfos.emplaceBack(
                 videoItem->contentItemId(),
-                (itemTitle.isEmpty() ? title : title + " " + itemTitle)
+                        itemTitle
+                  //保存的文件名不带前面的大标题
+//                (itemTitle.isEmpty() ? title : title + " " + itemTitle)
             );
         }
         for (auto &[itemId, name] : metaInfos) {

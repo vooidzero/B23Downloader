@@ -24,8 +24,8 @@ public:
 
     void save();
     void load();
+    void changemaxtasknum();
     void addTasks(const QList<AbstractDownloadTask*> &, bool activate = true);
-
     void stopAll();
     void startAll();
     void removeAll();

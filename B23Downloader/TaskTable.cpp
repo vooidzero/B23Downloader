@@ -3,9 +3,14 @@
 #include "Settings.h"
 #include "utils.h"
 
+#include "string.h"
+#include "stdio.h"
 #include <QtWidgets>
+#include "globalv.h"
 
-static constexpr int MaxConcurrentTaskCount = 3;
+//static constexpr int MaxConcurrentTaskCount = 3;
+int MaxConcurrentTaskCount = 3;
+
 static constexpr int SaveTasksInterval = 5000; // ms
 
 static constexpr int DownRateTimerInterval = 500; // ms
@@ -119,7 +124,11 @@ void TaskTableWidget::save()
         array.append(task->toJsonObj());
     }
     auto settings = Settings::inst();
-    settings->setValue("tasks", QJsonDocument(std::move(array)).toJson(QJsonDocument::Compact));
+    QString str1="tasks2-"+(QString)mypid;
+//    int char2size=strlen(mypid);
+//    strncat(char1,mypid,char2size);
+//    strcat(char1,mypid);
+    settings->setValue(str1, QJsonDocument(std::move(array)).toJson(QJsonDocument::Compact));
 
     if (activeTaskCnt == 0) {
         dirty = false;
@@ -130,7 +139,11 @@ void TaskTableWidget::save()
 void TaskTableWidget::load()
 {
     auto settings = Settings::inst();
-    auto array = QJsonDocument::fromJson(settings->value("tasks").toByteArray()).array();
+    QString str1="tasks1-"+(QString)mypid;
+//    int char2size=strlen(char1)-1+strlen(mypid);
+//    strncat(char1,mypid,char2size);
+//    strcat(char1,mypid);
+    auto array = QJsonDocument::fromJson(settings->value(str1).toByteArray()).array();
     QList<AbstractDownloadTask*> tasks;
     for (auto obj : array) {
         auto task = AbstractDownloadTask::fromJsonObj(obj.toObject());
@@ -140,9 +153,21 @@ void TaskTableWidget::load()
     }
     addTasks(tasks, false);
 }
+    //20220421 new add
+void TaskTableWidget::changemaxtasknum()
+{
 
+    if(maxtasknum==0)
+        MaxConcurrentTaskCount=3;
+    else
+        MaxConcurrentTaskCount=maxtasknum;
+}
+    //20220421 new add
 void TaskTableWidget::addTasks(const QList<AbstractDownloadTask *> &tasks, bool activate)
 {
+    //20220421 new add
+    changemaxtasknum();
+    //20220421 new add
     auto shouldSetDirty = false;
     auto rowHt = TaskCellWidget::cellHeight();
     for (auto task : tasks) {
@@ -183,6 +208,7 @@ void TaskTableWidget::stopAll()
 
 void TaskTableWidget::startAll()
 {
+    changemaxtasknum();
     auto shouldSetDirty = false;
     for (int row = 0; row < rowCount(); row++) {
         auto cell = cellWidget(row);
@@ -290,7 +316,7 @@ static void flattenPushButton(QPushButton *btn)
     btn->setFlat(true);
     btn->setStyleSheet("QPushButton:pressed{border:none; }");
 }
-
+//设置每一个下载任务的显示
 TaskCellWidget::TaskCellWidget(AbstractDownloadTask *task, QWidget *parent)
     : QWidget(parent), task(task)
 {

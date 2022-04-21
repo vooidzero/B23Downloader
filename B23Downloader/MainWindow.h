@@ -25,6 +25,7 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    void changemaxtasknum();
     void startGetUserInfo();
     void startGetUFace();
 
@@ -43,6 +44,9 @@ private:
 
     QToolButton *ufaceButton;
     ElidedTextLabel *unameLabel;
+    //202220421 new add
+    QLineEdit *maxtasknumedit;
+    //202220421 new add
     QLineEdit *urlLineEdit;
     TaskTableWidget *taskTable;
 };

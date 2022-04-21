@@ -9,9 +9,11 @@
 #include "TaskTable.h"
 #include "AboutWidget.h"
 #include "MyTabWidget.h"
-
+#include "globalv.h"
 #include <QtWidgets>
 #include <QtNetwork>
+
+#include "clsmyprocessinfo.h"
 
 static constexpr int GetUserInfoRetryInterval = 10000; // ms
 static constexpr int GetUserInfoTimeout = 10000; // ms
@@ -27,7 +29,12 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 
     Network::accessManager()->setCookieJar(Settings::inst()->getCookieJar());
-    setWindowTitle("B23Downloader");
+    clsmyprocessinfo* mypi=new clsmyprocessinfo();
+    char* pidchar=mypi->getcurprocessidstr();
+    std::string str1="B23Downloader-";
+    char* char1=mypi->strtochar(str1);
+    strcat(char1,pidchar);
+    setWindowTitle(char1);
     setCentralWidget(new QWidget);
     auto mainLayout = new QVBoxLayout(centralWidget());
     auto topLayout = new QHBoxLayout;
@@ -61,6 +68,12 @@ MainWindow::MainWindow(QWidget *parent)
     // set up download url lineEdit
     auto downloadUrlLayout = new QHBoxLayout;
     downloadUrlLayout->setSpacing(0);
+    //202220421 new add
+    maxtasknumedit=new QLineEdit;
+    maxtasknumedit->setFixedHeight(32);
+    maxtasknumedit->setClearButtonEnabled(true);
+    maxtasknumedit->setPlaceholderText("3");
+    //202220421 new add
     urlLineEdit = new QLineEdit;
     urlLineEdit->setFixedHeight(32);
     urlLineEdit->setClearButtonEnabled(true);
@@ -77,9 +90,11 @@ MainWindow::MainWindow(QWidget *parent)
         "QPushButton:hover{background-color:rgb(229,229,229);}"
         "QPushButton:pressed{background-color:rgb(204,204,204);}"
     );
+    connect(maxtasknumedit,&QLineEdit::textChanged,this,&MainWindow::changemaxtasknum);
     connect(urlLineEdit, &QLineEdit::returnPressed, this, &MainWindow::downloadButtonClicked);
     connect(downloadButton, &QPushButton::clicked, this, &MainWindow::downloadButtonClicked);
 
+    downloadUrlLayout->addWidget(maxtasknumedit, 1);
     downloadUrlLayout->addWidget(urlLineEdit, 1);
     downloadUrlLayout->addWidget(downloadButton);
     topLayout->addLayout(downloadUrlLayout, 2);
@@ -115,7 +130,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
     }
 }
-
+void MainWindow::changemaxtasknum()
+{
+    maxtasknum=maxtasknumedit->text().toInt();
+    if(maxtasknum>=10)
+        maxtasknum=10;
+}
 void MainWindow::startGetUserInfo()
 {
     if (!Settings::inst()->hasCookies()) {
@@ -265,6 +285,9 @@ void MainWindow::ufaceButtonClicked()
 
 void MainWindow::downloadButtonClicked()
 {
+    //20220421 new add
+    maxtasknum=maxtasknumedit->text().trimmed().toInt();
+    //20220421 new add
     auto trimmed = urlLineEdit->text().trimmed();
     if (trimmed.isEmpty()) {
         urlLineEdit->clear();

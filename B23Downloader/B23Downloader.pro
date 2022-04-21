@@ -1,5 +1,6 @@
 VERSION = 0.9.5
-QT       += core gui network
+QT       += core gui network \
+    quick
 
 win32-g++:contains(QMAKE_HOST.arch, x86_64):{
     # DEFINES += ENABLE_UPDATE_CHECK
@@ -12,7 +13,7 @@ win32-g++:contains(QMAKE_HOST.arch, x86_64):{
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 RC_ICONS = B23Downloader.ico
 
@@ -33,6 +34,8 @@ SOURCES += \
     QrCode.cpp \
     Settings.cpp \
     TaskTable.cpp \
+    clsmyprocessinfo.cpp \
+    globalv.cpp \
     main.cpp \
     utils.cpp
 
@@ -49,6 +52,8 @@ HEADERS += \
     QrCode.h \
     Settings.h \
     TaskTable.h \
+    clsmyprocessinfo.h \
+    globalv.h \
     utils.h
 
 # Default rules for deployment.

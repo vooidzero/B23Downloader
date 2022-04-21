@@ -1,7 +1,10 @@
 #include "MainWindow.h"
 #include <QApplication>
 #include <QSharedMemory>
-
+#include "clsmyprocessinfo.h"
+#include "string.h"
+#include "stdio.h"
+#include "globalv.h"
 #ifdef Q_OS_WIN // ensure single application instance at Windows
 
 #include <windows.h>
@@ -20,9 +23,14 @@ void raiseWindow(const HWND hWnd)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    QSharedMemory sharedMem("B23Dld-HWND");
-
+    clsmyprocessinfo *mypi=new clsmyprocessinfo();
+    std::string str1="B23Dl-";
+    char* char1=mypi->strtochar(str1);
+    char* char2=mypi->getcurprocessidstr();
+    mypid=char2;
+    strcat(char1,char2);
+    QSharedMemory sharedMem(char1);
+//    QSharedMemory sharedMem(charmemid);
     auto setHwnd = [&sharedMem](HWND hWnd) {
         sharedMem.lock();
         auto ptr = static_cast<HWND*>(sharedMem.data());

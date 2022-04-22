@@ -102,20 +102,23 @@ B23Downloader 使用 Qt 6 (C++ 17) 开发，虽然 Release 只有 Windows 64-bit
 <br>
 
 # 开发日志
-+ **正在考虑代码重构**
   2022/4/22
   在原版基礎上做了如下修改：
+
 	modify:
 	1 下载时如果是一套很多集的视频，文件名只是用课程本身的名字
 	  如果下载只是一个视频，文件名就使用该视频本身的名字
 	2 在选择的下载文件夹下，判断需要下载的文件是否存在，大小是否正确，如果否则下载
 	3 ui中增加了一个设置任务数量的文本框，在每次下载全部开始的时候会使用这个文本框的值，目前设置为最大为3，超过3的时候，内部还是会设置为3
 <img src="./README.assets/singletask.png" alt="singletask" width="500" />
+
 <img src="./README.assets/twotask.png" alt="twotask" width="500" />
+
 
 	fix:
 	1 文件路径中带"."时，Fileinfo(path).basename返回不正常，已经改成以"/"字符分割后，取最后段
     2 有时因为网络的原因，下载任务会自动暂停，并且当网络好的时候，也不继续下载，现在修复好了
++ **正在考虑代码重构**
 + 2021/10/08 - 2021/10/11
   <details><summary>解决了一个老问题：下载的直播视频文件无法拖动进度条（需要极长时间来完成响应）</summary>
   <p>最初我是用 <a href="https://ffmpeg.org/">ffmpeg</a> 来下载直播的，那时得到的文件并没有问题。2021 年 05 月，我尝试用 wget 直接下载而不是通过 ffmpeg，发现下载的文件有「无法拖动进度条」的问题，如果用 ffmpeg 处理 (remux) 一下就正常了：<code>ffmpeg -i &lt;raw_file&gt; -c copy &lt;remuxed_file&gt;</code>。</p>

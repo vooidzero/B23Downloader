@@ -10,4 +10,5 @@
 //};
 extern char* mypid;
 extern int maxtasknum;
+extern int finalmaxtasknum;
 #endif // GLOBALV_H

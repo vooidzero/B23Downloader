@@ -6,3 +6,4 @@
 //}
 char* mypid;
 int maxtasknum;
+int finalmaxtasknum=3;

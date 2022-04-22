@@ -13,6 +13,8 @@
 #include <QtWidgets>
 #include <QtNetwork>
 
+#include "stdio.h"
+#include "string.h"
 #include "clsmyprocessinfo.h"
 
 static constexpr int GetUserInfoRetryInterval = 10000; // ms
@@ -31,7 +33,11 @@ MainWindow::MainWindow(QWidget *parent)
     Network::accessManager()->setCookieJar(Settings::inst()->getCookieJar());
     clsmyprocessinfo* mypi=new clsmyprocessinfo();
     char* pidchar=mypi->getcurprocessidstr();
-    std::string str1="B23Downloader-";
+    std::string str1="";
+    if(finalmaxtasknum>3)
+        str1="B23Downloader"+std::to_string(finalmaxtasknum)+"-";
+    else
+        str1="B23Downloader-";
     char* char1=mypi->strtochar(str1);
     strcat(char1,pidchar);
     setWindowTitle(char1);
@@ -133,8 +139,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::changemaxtasknum()
 {
     maxtasknum=maxtasknumedit->text().toInt();
-    if(maxtasknum>=10)
-        maxtasknum=10;
+    if(maxtasknum>=finalmaxtasknum)
+    {
+        maxtasknum=finalmaxtasknum;
+        QString tempstr=QString::number(maxtasknum);
+//                tempstr=(QString)std::to_string(maxtasknum);
+        maxtasknumedit->setText(tempstr);
+    }
 }
 void MainWindow::startGetUserInfo()
 {

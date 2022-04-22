@@ -488,7 +488,7 @@ void TaskCellWidget::updateProgressWidgets()
         progressBar->setValue(static_cast<int>(progress * 100));
     }
 }
-
+//更新cell中下载状态，包括速度，预计剩余时间
 void TaskCellWidget::updateDownloadStats()
 {
     qint64 downloadedBytes = task->getDownloadedBytesCnt();
@@ -497,8 +497,16 @@ void TaskCellWidget::updateDownloadStats()
         bytes = 0;
         downRateWindow.clear();
     }
+    //20220422 new add
+    if(bytes==0)
+    {
+        startDownload();
+        return;
+    }
+    //20220422 new add
     double seconds = downRateWindow.size() * ((double)DownRateTimerInterval / 1000.0);
     qint64 downBytesPerSec = static_cast<qint64>(static_cast<double>(bytes) / seconds);
+
     downRateLabel->setText(Utils::formattedDataSize(downBytesPerSec) + "/s");
 
     if (downRateWindow.size() == DownRateWindowLength) {
@@ -513,7 +521,7 @@ void TaskCellWidget::updateDownloadStats()
 
     updateProgressWidgets();
 }
-
+//设置下载状态图标
 void TaskCellWidget::updateStartStopBtn()
 {
     if (state == State::Waiting || state == State::Downloading) {

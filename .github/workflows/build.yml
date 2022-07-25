@@ -1,0 +1,57 @@
+name: build
+on: [push]
+jobs:
+  build:
+    name: Build
+    # 运行平台: windows server 2019 
+    runs-on: windows-2019
+    strategy:
+      # 矩阵配置
+      matrix:
+        include:       
+          # 6.2.4 参考 https://mirrors.cloud.tencent.com/qt/online/qtsdkrepository/windows_x86/desktop/qt6_624/
+          - qt_ver: 6.2.4
+            qt_arch: win64_msvc2019_64
+            msvc_arch: x64
+            qt_arch_install: msvc2019_64
+    env:
+      targetName: HelloActions-Qt.exe
+    # 步骤
+    steps:
+      # 安装Qt
+      - name: Install Qt
+        # 使用外部action。这个action专门用来安装Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          # Version of Qt to install
+          version: ${{ matrix.qt_ver }}
+          # Target platform for build
+          # target: ${{ matrix.qt_target }}
+          arch: ${{ matrix.qt_arch }}
+          cached: 'false'
+          aqtversion: '==2.0.5'          
+      # 拉取代码
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      # msvc编译
+      - name: msvc-build
+        id: build
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.msvc_arch }}
+          cd B23Downloader
+          qmake
+          nmake
+          echo winSdkDir=%WindowsSdkDir% >> %GITHUB_ENV%
+          echo winSdkVer=%WindowsSdkVersion% >> %GITHUB_ENV%
+          echo vcToolsInstallDir=%VCToolsInstallDir% >> %GITHUB_ENV%
+          echo vcToolsRedistDir=%VCToolsRedistDir% >> %GITHUB_ENV% 
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          # Artifact name
+          name: B23Downloader
+          # A file, directory or wildcard pattern that describes what to upload
+          path: D:\a\B23Downloader\B23Downloader\B23Downloader\release\B23Downloader.exe
+          # The desired behavior if no files are found using the provided path.

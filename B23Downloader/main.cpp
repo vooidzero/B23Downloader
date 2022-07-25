@@ -5,6 +5,7 @@
 #ifdef Q_OS_WIN // ensure single application instance at Windows
 
 #include <windows.h>
+#pragma comment  (lib, "User32.lib")
 
 void raiseWindow(const HWND hWnd)
 {

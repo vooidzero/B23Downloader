@@ -54,6 +54,7 @@ private:
     QLabel *titleLabel;
 
     QToolButton *selAllBtn = nullptr;
+    QCheckBox *addNumberPrefixBox = nullptr;
     QLabel *selCountLabel = nullptr;
     ContentTreeWidget *tree = nullptr;
     QComboBox *qnComboBox = nullptr;

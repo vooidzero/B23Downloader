@@ -78,7 +78,7 @@ std::pair<QJsonObject, QString> Bili::parseReply(QNetworkReply *reply, const QSt
     auto data = reply->readAll();
     auto jsonDoc = QJsonDocument::fromJson(data);
     auto jsonObj = jsonDoc.object();
-    qDebug() << "reply from" << reply->url(); // << QString::fromUtf8(data);
+    qDebug() << "reply from" << reply->url();
 
     if (jsonObj.isEmpty()) {
         return { QJsonObject(), "http请求错误" };

@@ -519,12 +519,15 @@ void DownloadDialog::setupUi()
 
     if (contentType != ContentType::Live) {
         auto selLayout = new QHBoxLayout;
-        selAllBtn = new QToolButton;
+        selAllBtn = new QToolButton(this);
         selAllBtn->setText("全选");
         selAllBtn->setAutoRaise(true);
         selAllBtn->setCursor(Qt::PointingHandCursor);
-        selCountLabel = new QLabel;
+        addNumberPrefixBox = new QCheckBox(this);
+        addNumberPrefixBox->setText("文件添加序号");
+        selCountLabel = new QLabel(this);
         selLayout->addWidget(selAllBtn);
+        selLayout->addWidget(addNumberPrefixBox);
         selLayout->addStretch(1);
         selLayout->addWidget(selCountLabel);
         mainLayout->addLayout(selLayout);
@@ -828,6 +831,18 @@ QList<AbstractDownloadTask*> DownloadDialog::getDownloadTasks()
     if (contentType == ContentType::Live) {
         tasks.append(new LiveDownloadTask(contentId, qn, dir.filePath(title)));
     } else {
+        // 添加文件序号
+        auto addNumberPrefix = addNumberPrefixBox->isChecked();
+        auto number = 1;
+        auto numberCount = 0;
+        if(addNumberPrefix) {
+            auto selSize = tree->selectedItems().size();
+            while(selSize > 0) {
+                selSize /= 10;
+                numberCount++;
+            }
+        }
+
         QList<std::tuple<qint64, QString>> metaInfos;
         for (auto item : tree->selectedItems()) {
             auto videoItem = static_cast<ContentTreeItem*>(item);
@@ -837,9 +852,16 @@ QList<AbstractDownloadTask*> DownloadDialog::getDownloadTasks()
             auto itemTitle = videoItem->longTitle();
             metaInfos.emplaceBack(
                 videoItem->contentItemId(),
-                (itemTitle.isEmpty() ? title : title + " " + itemTitle)
+                QString("%1%2%3%4")
+                        .arg(addNumberPrefix
+                               ? QString("%1.").arg(number++, numberCount, 10, QLatin1Char('0'))
+                               : "")
+                        .arg(title)
+                        .arg(itemTitle.isEmpty() ? "" : " ")
+                        .arg(itemTitle)
             );
         }
+
         for (auto &[itemId, name] : metaInfos) {
             AbstractDownloadTask *task = nullptr;
             auto path = dir.filePath(name);
